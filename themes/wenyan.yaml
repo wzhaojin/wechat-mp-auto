@@ -1,0 +1,12 @@
+# 文雁主题
+
+name: 文雁
+
+colors:
+  primary: "#0066FF"
+  secondary: "#00D4AA"
+  text: "#1A1A2E"
+
+body:
+  font_size: "15px"
+  line_height: "1.75"

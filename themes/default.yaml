@@ -1,0 +1,12 @@
+# 默认主题
+
+name: 默认主题
+
+colors:
+  primary: "#007AFF"
+  secondary: "#5856D6"
+  text: "#333333"
+
+body:
+  font_size: "15px"
+  line_height: "1.8"

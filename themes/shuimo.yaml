@@ -1,0 +1,12 @@
+# 水墨主题
+
+name: 水墨
+
+colors:
+  primary: "#2C3E50"
+  secondary: "#34495E"
+  text: "#333333"
+
+body:
+  font_size: "16px"
+  line_height: "2"

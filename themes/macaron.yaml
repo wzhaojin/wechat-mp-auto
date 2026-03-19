@@ -1,0 +1,12 @@
+# 马卡龙主题
+
+name: 马卡龙
+
+colors:
+  primary: "#FF6B9D"
+  secondary: "#C9A0DC"
+  text: "#4A4A4A"
+
+body:
+  font_size: "15px"
+  line_height: "1.8"
