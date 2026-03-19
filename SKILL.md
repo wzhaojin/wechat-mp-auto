@@ -1,6 +1,6 @@
 # wechat-mp-auto - 微信公众号自动化 Skill
 
-**版本**: 1.2  
+**版本**: 0.0.2  
 **描述**: 微信公众号文章从选题到发布的全流程自动化
 
 ---
@@ -13,6 +13,20 @@
 - **内容审核** - 本地+网络重复度检测、敏感词扫描、**三阶段完整性检查**
 - 本地主题 - 5种主题切换
 - 数据分析 - 阅读量、点赞数统计
+
+---
+
+## 安装
+
+```bash
+pip install -r requirements.txt
+```
+
+### 配置
+
+1. 在 `~/.config/wechat-mp-auto/config.json` 配置微信凭证
+2. 或在 `~/.openclaw/.env` 中配置环境变量
+3. 可选：配置图片API密钥（PEXELS_API_KEY、UNSPLASH_API_KEY等）
 
 ---
 
