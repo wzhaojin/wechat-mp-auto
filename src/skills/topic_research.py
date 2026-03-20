@@ -1,13 +1,43 @@
 """
 微信公众号自动化 - 选题调研 Skill
+支持级联搜索：Tavily → DuckDuckGo → 百度
 """
 
+import os
+import re
+import time
 import logging
 from typing import List, Dict, Optional
+from collections import Counter
 from .base_skill import BaseSkill
 
 # 配置日志
 logger = logging.getLogger(__name__)
+
+# 搜索Provider注册表（按优先级排序）
+SEARCH_PROVIDER_REGISTRY = [
+    {
+        "name": "tavily",
+        "priority": 1,
+        "requires_key": True,
+        "env_var": "TAVILY_API_KEY",
+        "method": "_search_by_tavily"
+    },
+    {
+        "name": "duckduckgo",
+        "priority": 2,
+        "requires_key": False,
+        "env_var": None,
+        "method": "_search_by_duckduckgo"
+    },
+    {
+        "name": "baidu",
+        "priority": 3,
+        "requires_key": False,
+        "env_var": None,
+        "method": "_search_by_baidu"
+    },
+]
 
 
 class TopicResearchSkill(BaseSkill):
@@ -35,11 +65,11 @@ class TopicResearchSkill(BaseSkill):
             
             logger.info(f"开始调研选题: {search_query}")
             
-            # 搜索 - 优先使用 Tavily，其次用简单 HTTP 搜索
-            results = self._search_web(search_query)
+            # 级联搜索
+            results = self._cascade_search(search_query, limit=10)
             
             if not results:
-                # 降级：使用模拟数据
+                logger.warning(f"所有搜索源均失败，使用默认结果")
                 results = [{"title": f"关于 {topic} 的研究", "url": "https://example.com", "snippet": "暂无搜索结果"}]
             
             logger.info(f"选题调研完成: {topic}, 找到 {len(results)} 条结果")
@@ -57,89 +87,208 @@ class TopicResearchSkill(BaseSkill):
         except Exception as e:
             logger.error(f"选题调研失败: {str(e)}", exc_info=True)
             raise
-    
-    def _search_web(self, query: str, limit: int = 10) -> List[Dict]:
-        """网络搜索"""
-        import os
+
+    def _cascade_search(self, query: str, limit: int = 10) -> List[Dict]:
+        """
+        级联搜索：按优先级尝试多个搜索源
+        任何一个成功即返回，失败则尝试下一个
+        """
+        errors = []
+
+        for provider in SEARCH_PROVIDER_REGISTRY:
+            provider_name = provider["name"]
+            method_name = provider["method"]
+            requires_key = provider["requires_key"]
+            env_var = provider["env_var"]
+
+            # 检查API Key（如果需要）
+            if requires_key:
+                api_key = os.environ.get(env_var, "") if env_var else ""
+                if not api_key:
+                    logger.debug(f"[{provider_name}] 跳过：未配置 API Key")
+                    continue
+
+            logger.info(f"尝试搜索源: {provider_name}")
+
+            try:
+                # 调用对应的搜索方法
+                results = getattr(self, method_name)(query, limit)
+                
+                if results:
+                    logger.info(f"[{provider_name}] 搜索成功: {len(results)} 条结果")
+                    return results
+                else:
+                    logger.warning(f"[{provider_name}] 返回空结果")
+                    errors.append(f"{provider_name}: 空结果")
+                    continue
+
+            except Exception as e:
+                err_str = str(e)
+                logger.warning(f"[{provider_name}] 搜索失败: {err_str}")
+                errors.append(f"{provider_name}: {err_str}")
+                continue
+
+        logger.error(f"所有搜索源均失败: {errors}")
+        return []
+
+    def _search_by_tavily(self, query: str, limit: int = 10) -> List[Dict]:
+        """Tavily API 搜索"""
         import requests
         
-        # 优先使用 Tavily
-        tavily_key = os.environ.get("TAVILY_API_KEY", "")
-        if tavily_key:
-            try:
-                resp = requests.post(
-                    "https://api.tavily.com/search",
-                    json={"query": query, "max_results": limit},
-                    headers={"Content-Type": "application/json"},
-                    timeout=15
-                )
-                if resp.status_code == 200:
-                    data = resp.json()
-                    results = []
-                    for item in data.get("results", []):
-                        results.append({
-                            "title": item.get("title", ""),
-                            "url": item.get("url", ""),
-                            "snippet": item.get("content", "")
-                        })
-                    logger.info(f"Tavily 搜索成功: {len(results)} 条结果")
-                    return results
-            except Exception as e:
-                logger.warning(f"Tavily 搜索失败: {str(e)}")
+        api_key = os.environ.get("TAVILY_API_KEY", "")
+        if not api_key:
+            raise ValueError("Tavily API Key 未配置")
+
+        url = "https://api.tavily.com/search"
+        headers = {"Content-Type": "application/json"}
+        payload = {
+            "query": query,
+            "max_results": limit,
+            "api_key": api_key
+        }
+
+        resp = requests.post(url, json=payload, headers=headers, timeout=20)
         
-        # 备选：使用 DuckDuckGo (无需 API key)
-        try:
-            ddg_url = "https://duckduckgo.com/"
-            params = {"q": query, "format": "json", "no_html": "1"}
-            resp = requests.get(ddg_url, params=params, timeout=15)
-            
-            # DuckDuckGo API 需要特殊处理
-            # 使用 HTML 搜索作为降级
-            from urllib.parse import quote
-            html_url = f"https://html.duckduckgo.com/html/?q={quote(query)}"
-            resp = requests.get(html_url, timeout=15)
-            
-            if resp.status_code == 200:
-                import re
-                # 简单解析 HTML 结果
-                items = re.findall(r'<a class="result__a" href="([^"]+)"[^>]*>(.+?)</a>', resp.text)
-                results = []
-                for url, title in items[:limit]:
-                    # 提取实际 URL（DuckDuckGo 重定向）
+        if resp.status_code == 401:
+            raise ValueError("Tavily API Key 无效或已过期")
+        elif resp.status_code == 429:
+            # 限流，短暂等待后重试
+            logger.warning("[tavily] 请求限流，等待2秒后重试...")
+            time.sleep(2)
+            resp = requests.post(url, json=payload, headers=headers, timeout=20)
+        
+        if resp.status_code != 200:
+            raise ValueError(f"Tavily API 返回错误: HTTP {resp.status_code}")
+
+        data = resp.json()
+        results = []
+        for item in data.get("results", []):
+            results.append({
+                "title": item.get("title", ""),
+                "url": item.get("url", ""),
+                "snippet": item.get("content", "")
+            })
+        
+        return results
+
+    def _search_by_duckduckgo(self, query: str, limit: int = 10) -> List[Dict]:
+        """DuckDuckGo HTML 搜索（无需 API Key）"""
+        import requests
+        from urllib.parse import quote
+
+        # 使用 HTML 模式的 DuckDuckGo
+        html_url = f"https://html.duckduckgo.com/html/?q={quote(query)}"
+        
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+        }
+        
+        resp = requests.get(html_url, headers=headers, timeout=15)
+        
+        if resp.status_code != 200:
+            raise ValueError(f"DuckDuckGo 返回错误: HTTP {resp.status_code}")
+
+        # 解析 HTML 结果
+        # 匹配 <a class="result__a" href="...">标题</a>
+        pattern = r'<a class="result__a" href="([^"]+)"[^>]*>(.+?)</a>'
+        matches = re.findall(pattern, resp.text)
+        
+        results = []
+        for url, title_html in matches[:limit]:
+            # 清理HTML标签
+            title = re.sub(r'<[^>]+>', '', title_html).strip()
+            if title:
+                results.append({
+                    "title": title,
+                    "url": url,
+                    "snippet": ""
+                })
+        
+        if not results:
+            # 备用解析：尝试匹配其他格式
+            alt_pattern = r'<a href="(https?://[^"]+)"[^>]*class="result__snippet"[^>]*>(.+?)</a>'
+            alt_matches = re.findall(alt_pattern, resp.text)
+            for url, snippet_html in alt_matches[:limit]:
+                snippet = re.sub(r'<[^>]+>', '', snippet_html).strip()
+                results.append({
+                    "title": url.split('/')[-1][:50] or url,
+                    "url": url,
+                    "snippet": snippet
+                })
+        
+        return results
+
+    def _search_by_baidu(self, query: str, limit: int = 10) -> List[Dict]:
+        """百度搜索（国内可用，无需 API Key）"""
+        import requests
+        from urllib.parse import quote
+
+        # 百度搜索
+        baidu_url = f"https://www.baidu.com/s?wd={quote(query)}&rn={limit}"
+        
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "zh-CN,zh;q=0.9",
+        }
+        
+        resp = requests.get(baidu_url, headers=headers, timeout=15)
+        
+        if resp.status_code != 200:
+            raise ValueError(f"百度搜索返回错误: HTTP {resp.status_code}")
+        
+        # 解析百度搜索结果
+        # 匹配 <h3 class="c-title"> 和 <a class="c-title">
+        results = []
+        
+        # 方式1: 匹配标题和链接
+        title_pattern = r'<a[^>]+class="[^"]*c-title[^"]*"[^>]+href="([^"]+)"[^>]*>(.+?)</a>'
+        title_matches = re.findall(title_pattern, resp.text, re.DOTALL)
+        
+        for url, title_html in title_matches[:limit]:
+            title = re.sub(r'<[^>]+>', '', title_html).strip()
+            if title and url.startswith('http'):
+                results.append({
+                    "title": title,
+                    "url": url,
+                    "snippet": ""
+                })
+        
+        # 方式2: 备用解析
+        if not results:
+            # 匹配 <h3 class="c-title"><a href="...">标题</a></h3>
+            h3_pattern = r'<h3[^>]*class="[^"]*c-title[^"]*"[^>]*>.*?<a[^>]+href="([^"]+)"[^>]*>(.+?)</a>'
+            h3_matches = re.findall(h3_pattern, resp.text, re.DOTALL)
+            for url, title_html in h3_matches[:limit]:
+                title = re.sub(r'<[^>]+>', '', title_html).strip()
+                if title:
                     results.append({
-                        "title": re.sub(r'<[^>]+>', '', title),
+                        "title": title,
                         "url": url,
                         "snippet": ""
                     })
-                if results:
-                    logger.info(f"DuckDuckGo 搜索成功: {len(results)} 条结果")
-                    return results
-        except Exception as e:
-            logger.warning(f"搜索失败: {str(e)}")
         
-        return []
-    
+        return results
+
     def _extract_related_topics(self, search_results: List[Dict]) -> List[str]:
         """从搜索结果中提取相关主题"""
-        # 简单实现：提取标题中的关键词
-        import re
         all_words = []
         
         for result in search_results:
             title = result.get("title", "")
-            # 提取中文和英文词
+            # 提取中文词（2字以上）
             chinese = re.findall(r'[\u4e00-\u9fff]{2,}', title)
+            # 提取英文词（3字母以上）
             english = re.findall(r'[a-zA-Z]{3,}', title)
             all_words.extend(chinese)
             all_words.extend(english)
         
         # 统计词频
-        from collections import Counter
         word_count = Counter(all_words)
         
         # 返回最常见的主题词
         return [word for word, _ in word_count.most_common(5)]
-    
+
     def _generate_summary(self, topic: str, search_results: List[Dict]) -> str:
         """生成摘要"""
         if not search_results:
@@ -165,15 +314,50 @@ class TopicResearchSkill(BaseSkill):
         try:
             logger.info(f"为选题生成大纲: {topic}")
             
-            result = {
-                "title": f"深度解析：{topic}",
-                "sections": [
-                    {"name": "引言", "description": "背景介绍", "key_points": ["背景", "重要性"]},
-                    {"name": "核心内容", "description": "关键要素", "key_points": ["要点1", "要点2"]},
-                    {"name": "结论", "description": "总结", "key_points": ["结论", "建议"]}
-                ],
-                "estimated_words": 2000
-            }
+            # 如果有搜索结果，利用摘要生成更丰富的大纲
+            summary = research_data.get("summary", "") if research_data else ""
+            search_results = research_data.get("search_results", []) if research_data else []
+            
+            # 根据是否有内容决定大纲详细程度
+            if summary and "暂无" not in summary:
+                # 有真实搜索结果，生成更详细的大纲
+                result = {
+                    "title": f"深度解析：{topic}",
+                    "sections": [
+                        {
+                            "name": "引言", 
+                            "description": f"{topic}的背景与重要性", 
+                            "key_points": ["背景介绍", "发展历程", "当前趋势"]
+                        },
+                        {
+                            "name": "核心内容", 
+                            "description": f"{topic}的关键要素", 
+                            "key_points": ["要点1", "要点2", "要点3"]
+                        },
+                        {
+                            "name": "实践方法", 
+                            "description": f"如何应用{topic}", 
+                            "key_points": ["方法步骤", "注意事项", "常见问题"]
+                        },
+                        {
+                            "name": "结论", 
+                            "description": "总结与建议", 
+                            "key_points": ["核心总结", "未来展望", "行动建议"]
+                        }
+                    ],
+                    "estimated_words": 3000
+                }
+            else:
+                # 无搜索结果，使用简化大纲
+                result = {
+                    "title": f"深度解析：{topic}",
+                    "sections": [
+                        {"name": "引言", "description": "背景介绍", "key_points": ["背景", "重要性"]},
+                        {"name": "核心内容", "description": "关键要素", "key_points": ["要点1", "要点2"]},
+                        {"name": "结论", "description": "总结", "key_points": ["结论", "建议"]}
+                    ],
+                    "estimated_words": 2000
+                }
             
             logger.info(f"大纲生成完成: {topic}")
             return result

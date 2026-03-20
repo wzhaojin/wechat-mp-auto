@@ -10,9 +10,14 @@ All notable changes to this project will be documented in this file.
   - 支持的 Provider：ali-bailian/wanx、minimax-cn/image-01、baidu、tencent、zhipu、sensetime、bytedance、openai/dall-e-3、google/imagen-3、stability-ai、replicate、aws-bedrock、azure-openai
   - 初筛（input/api含image）→ 实测调用API → 缓存24小时
 - 探测结果缓存机制（`~/.cache/wechat-mp-auto/image_models_cache.json`）
+- 级联搜索机制（TopicResearchSkill）
+  - 支持 Tavily → DuckDuckGo → 百度 多源自动切换
+  - 任何一个源成功即返回，失败自动尝试下一个
+  - 失败原因详细记录，限流(429)自动重试
 
 ### Changed
 - `get_ai_model_options()` 适配新探测逻辑，无可用模型时给出明确提示
+- `TopicResearchSkill.research_topic()` 和内容审核网络检测均支持级联搜索
 
 ## [0.0.4] - 2026-03-19
 
