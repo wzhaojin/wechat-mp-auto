@@ -230,7 +230,7 @@ check_article_integrity(draft_content=draft_content, stage="draft")
 | macaron | 马卡龙风格（粉紫色） |
 | shuimo | 水墨风格 |
 | wenyan | 文言风格 |
-| henge | 猴哥风格 |
+| houge | 猴哥风格 |
 | default | 默认风格 |
 
 ## 内容审核详解

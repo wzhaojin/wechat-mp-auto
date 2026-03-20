@@ -608,6 +608,28 @@ class ImageGeneratorSkill(BaseSkill):
             return self._generate_by_moonshot_vl(full_prompt, size, api_key, base_url)
         elif provider == "ollama":
             return self._generate_by_ollama(full_prompt, size, api_key, base_url)
+        elif provider == "openai":
+            return self._generate_by_openai_dalle(full_prompt, size, api_key, base_url)
+        elif provider == "google":
+            return self._generate_by_google_imagen(full_prompt, size, api_key, base_url)
+        elif provider == "stability-ai":
+            return self._generate_by_stability(full_prompt, size, api_key, base_url)
+        elif provider == "azure-openai":
+            return self._generate_by_azure_dalle(full_prompt, size, api_key, base_url)
+        elif provider == "aws-bedrock":
+            return self._generate_by_aws_bedrock(full_prompt, size, api_key, base_url)
+        elif provider == "replicate":
+            return self._generate_by_replicate(full_prompt, size, api_key, base_url)
+        elif provider == "baidu":
+            return self._generate_by_baidu(full_prompt, size, api_key, base_url)
+        elif provider == "tencent":
+            return self._generate_by_tencent(full_prompt, size, api_key, base_url)
+        elif provider == "zhipu":
+            return self._generate_by_zhipu(full_prompt, size, api_key, base_url)
+        elif provider == "sensetime":
+            return self._generate_by_sensetime(full_prompt, size, api_key, base_url)
+        elif provider == "bytedance":
+            return self._generate_by_bytedance(full_prompt, size, api_key, base_url)
         else:
             logger.warning(f"Provider {provider} 的图像生成 API 暂未实现")
             return None
@@ -677,11 +699,460 @@ class ImageGeneratorSkill(BaseSkill):
         return None
 
     def _generate_by_ollama(self, prompt: str, size: str, api_key: str, base_url: str) -> Optional[str]:
-        """Ollama 本地模型（如 llava 等多模态模型）"""
-        # Ollama 本地支持图像生成（如 llava、sdxs 等）
-        # 如果本地有支持图像生成的模型可用这里调用
-        # 注意：标准 Ollama text 模型不支持图像生成
-        logger.warning("Ollama 图像生成需要本地安装支持图像生成的模型（如 sdxs、llava）")
+        """Ollama 本地模型（如 llava、sdxs 等多模态模型）"""
+        try:
+            import requests
+            # Ollama 生图通常使用 /api/generate 接口
+            # 先尝试标准格式
+            url = f"{base_url}/api/generate"
+            headers = {"Content-Type": "application/json"}
+            # 解析 size
+            width, height = map(int, size.split("x"))
+            payload = {
+                "model": "sdxs",  # 默认使用 sdxs 模型，用户需确保本地已安装
+                "prompt": prompt,
+                "width": width,
+                "height": height,
+                "stream": False
+            }
+            logger.info(f"调用 Ollama 图像生成 API...")
+            resp = requests.post(url, json=payload, headers=headers, timeout=180)
+            if resp.status_code != 200:
+                logger.warning(f"Ollama API 返回 {resp.status_code}: {resp.text[:200]}")
+                return None
+            data = resp.json()
+            image_url = data.get("response", {})
+            # Ollama 图像生成可能返回 base64 或 URL
+            if isinstance(image_url, dict) and image_url.get("url"):
+                return self._download_from_url(image_url["url"], "ollama")
+            elif isinstance(image_url, str) and image_url.startswith("data:"):
+                # base64 格式，直接保存
+                import base64
+                img_data = image_url.split(",", 1)
+                if len(img_data) == 2:
+                    img_bytes = base64.b64decode(img_data[1])
+                    filename = f"ollama_{uuid.uuid4().hex[:8]}.png"
+                    filepath = self._cache_dir / filename
+                    with open(filepath, "wb") as f:
+                        f.write(img_bytes)
+                    return str(filepath)
+            logger.warning(f"Ollama 未返回有效图片: {str(data)[:200]}")
+        except Exception as e:
+            logger.error(f"Ollama 图像生成失败: {e}")
+        return None
+
+    def _generate_by_openai_dalle(self, prompt: str, size: str, api_key: str, base_url: str) -> Optional[str]:
+        """OpenAI DALL-E 图像生成 API"""
+        try:
+            import requests
+            # OpenAI 兼容格式
+            url = f"{base_url}/v1/images/generations"
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            }
+            payload = {
+                "model": "dall-e-3",
+                "prompt": prompt,
+                "n": 1,
+                "size": "1024x1024",
+                "response_format": "url"
+            }
+            logger.info(f"调用 OpenAI DALL-E 3 图像生成 API...")
+            resp = requests.post(url, json=payload, headers=headers, timeout=120)
+            if resp.status_code != 200:
+                logger.warning(f"OpenAI DALL-E API 返回 {resp.status_code}: {resp.text[:200]}")
+                return None
+            data = resp.json()
+            image_url = data.get("data", [{}])[0].get("url", "")
+            if image_url:
+                return self._download_from_url(image_url, "openai")
+            logger.warning(f"OpenAI DALL-E 未返回图片 URL: {str(data)[:200]}")
+        except Exception as e:
+            logger.error(f"OpenAI DALL-E 图像生成失败: {e}")
+        return None
+
+    def _generate_by_google_imagen(self, prompt: str, size: str, api_key: str, base_url: str) -> Optional[str]:
+        """Google Imagen 图像生成 API"""
+        try:
+            import requests
+            # Google Vertex AI Imagen API
+            url = f"{base_url}/publishers/google/models/imagen-3/image:predict"
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            }
+            width, height = map(int, size.split("x"))
+            payload = {
+                "prompt": prompt,
+                "image_size": {"height": height, "width": width},
+                "sample_count": 1,
+                "aspect_ratio": "16:9" if width > height else "1:1"
+            }
+            logger.info(f"调用 Google Imagen 3 图像生成 API...")
+            resp = requests.post(url, json=payload, headers=headers, timeout=180)
+            if resp.status_code != 200:
+                logger.warning(f"Google Imagen API 返回 {resp.status_code}: {resp.text[:200]}")
+                return None
+            data = resp.json()
+            predictions = data.get("predictions", [])
+            if predictions:
+                # Imagen 返回 base64
+                bytes_data = predictions[0].get("bytesBase64Encoded", "")
+                if bytes_data:
+                    import base64
+                    img_bytes = base64.b64decode(bytes_data)
+                    filename = f"imagen_{uuid.uuid4().hex[:8]}.png"
+                    filepath = self._cache_dir / filename
+                    with open(filepath, "wb") as f:
+                        f.write(img_bytes)
+                    logger.info(f"Google Imagen 图片保存成功: {filepath}")
+                    return str(filepath)
+            logger.warning(f"Google Imagen 未返回图片: {str(data)[:200]}")
+        except Exception as e:
+            logger.error(f"Google Imagen 图像生成失败: {e}")
+        return None
+
+    def _generate_by_stability(self, prompt: str, size: str, api_key: str, base_url: str) -> Optional[str]:
+        """Stability AI 图像生成 API"""
+        try:
+            import requests
+            url = f"{base_url}/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image"
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+            width, height = map(int, size.split("x"))
+            payload = {
+                "text_prompts": [{"text": prompt, "weight": 1.0}],
+                "cfg_scale": 7.5,
+                "height": min(height, 1024),
+                "width": min(width, 1024),
+                "samples": 1,
+                "steps": 30
+            }
+            logger.info(f"调用 Stability AI SDXL 图像生成 API...")
+            resp = requests.post(url, json=payload, headers=headers, timeout=180)
+            if resp.status_code != 200:
+                logger.warning(f"Stability AI API 返回 {resp.status_code}: {resp.text[:200]}")
+                return None
+            data = resp.json()
+            artifacts = data.get("artifacts", [])
+            if artifacts:
+                import base64
+                img_bytes = base64.b64decode(artifacts[0].get("base64", ""))
+                filename = f"stability_{uuid.uuid4().hex[:8]}.png"
+                filepath = self._cache_dir / filename
+                with open(filepath, "wb") as f:
+                    f.write(img_bytes)
+                logger.info(f"Stability AI 图片保存成功: {filepath}")
+                return str(filepath)
+            logger.warning(f"Stability AI 未返回图片: {str(data)[:200]}")
+        except Exception as e:
+            logger.error(f"Stability AI 图像生成失败: {e}")
+        return None
+
+    def _generate_by_azure_dalle(self, prompt: str, size: str, api_key: str, base_url: str) -> Optional[str]:
+        """Azure OpenAI DALL-E 图像生成 API"""
+        try:
+            import requests
+            # Azure OpenAI 使用部署名称而非 dall-e-3
+            url = f"{base_url}/openai/deployments/dall-e-3/images/generations?api-version=2024-02-01"
+            headers = {
+                "api-key": api_key,
+                "Content-Type": "application/json",
+            }
+            payload = {
+                "prompt": prompt,
+                "n": 1,
+                "size": "1024x1024"
+            }
+            logger.info(f"调用 Azure OpenAI DALL-E 3 图像生成 API...")
+            resp = requests.post(url, json=payload, headers=headers, timeout=120)
+            if resp.status_code != 200:
+                logger.warning(f"Azure DALL-E API 返回 {resp.status_code}: {resp.text[:200]}")
+                return None
+            data = resp.json()
+            image_url = data.get("data", [{}])[0].get("url", "")
+            if image_url:
+                return self._download_from_url(image_url, "azure")
+            logger.warning(f"Azure DALL-E 未返回图片 URL: {str(data)[:200]}")
+        except Exception as e:
+            logger.error(f"Azure DALL-E 图像生成失败: {e}")
+        return None
+
+    def _generate_by_aws_bedrock(self, prompt: str, size: str, api_key: str, base_url: str) -> Optional[str]:
+        """AWS Bedrock Stability AI 图像生成 API"""
+        try:
+            import requests
+            import boto3
+            # AWS Bedrock 需要签名，使用 boto3
+            # 或者使用基础 URL 直接调用
+            url = f"{base_url}/imagegeneration/stabilityai/stable-diffusion-xl-v1"
+            width, height = map(int, size.split("x"))
+            payload = {
+                "text_prompts": [{"text": prompt, "weight": 1.0}],
+                "cfg_scale": 7.5,
+                "height": min(height, 1024),
+                "width": min(width, 1024),
+                "steps": 30,
+                "samples": 1
+            }
+            logger.info(f"调用 AWS Bedrock SDXL 图像生成 API...")
+            # AWS Bedrock 需要 AWS 签名，这里使用 Basic Auth（如果配置了）
+            headers = {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+            resp = requests.post(url, json=payload, headers=headers, timeout=180)
+            if resp.status_code != 200:
+                logger.warning(f"AWS Bedrock API 返回 {resp.status_code}: {resp.text[:200]}")
+                return None
+            data = resp.json()
+            artifacts = data.get("artifacts", [])
+            if artifacts:
+                import base64
+                img_bytes = base64.b64decode(artifacts[0].get("base64", ""))
+                filename = f"bedrock_{uuid.uuid4().hex[:8]}.png"
+                filepath = self._cache_dir / filename
+                with open(filepath, "wb") as f:
+                    f.write(img_bytes)
+                logger.info(f"AWS Bedrock 图片保存成功: {filepath}")
+                return str(filepath)
+            logger.warning(f"AWS Bedrock 未返回图片: {str(data)[:200]}")
+        except Exception as e:
+            logger.error(f"AWS Bedrock 图像生成失败: {e}")
+        return None
+
+    def _generate_by_replicate(self, prompt: str, size: str, api_key: str, base_url: str) -> Optional[str]:
+        """Replicate Flux 图像生成 API"""
+        try:
+            import requests
+            # Replicate 使用预测接口
+            url = f"{base_url}/v1/predictions"
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            }
+            payload = {
+                "version": "acl IpShpGBJlsNMENjkEZJDlFNMJAEqSby",
+                "input": {
+                    "prompt": prompt,
+                    "num_outputs": 1,
+                    "aspect_ratio": "16:9" if "x" in size and int(size.split("x")[0]) > int(size.split("x")[1]) else "1:1",
+                    "output_format": "jpg",
+                    "safety_checker": "yes"
+                }
+            }
+            logger.info(f"调用 Replicate Flux 图像生成 API...")
+            resp = requests.post(url, json=payload, headers=headers, timeout=30)
+            if resp.status_code not in (200, 201):
+                logger.warning(f"Replicate API 返回 {resp.status_code}: {resp.text[:200]}")
+                return None
+            
+            # Replicate 是异步的，需要轮询
+            prediction = resp.json()
+            prediction_id = prediction.get("id")
+            poll_url = f"{base_url}/v1/predictions/{prediction_id}"
+            
+            import time
+            for _ in range(60):  # 最多等 60 * 5 = 300 秒
+                time.sleep(5)
+                poll_resp = requests.get(poll_url, headers=headers, timeout=30)
+                if poll_resp.status_code == 200:
+                    result = poll_resp.json()
+                    if result.get("status") == "succeeded":
+                        output = result.get("output")
+                        if isinstance(output, list) and output:
+                            image_url = output[0]
+                            if image_url.startswith("http"):
+                                return self._download_from_url(image_url, "replicate")
+                            elif image_url.startswith("data:"):
+                                # base64
+                                import base64
+                                img_data = image_url.split(",", 1)
+                                if len(img_data) == 2:
+                                    img_bytes = base64.b64decode(img_data[1])
+                                    filename = f"replicate_{uuid.uuid4().hex[:8]}.jpg"
+                                    filepath = self._cache_dir / filename
+                                    with open(filepath, "wb") as f:
+                                        f.write(img_bytes)
+                                    return str(filepath)
+                        break
+                    elif result.get("status") == "failed":
+                        logger.warning(f"Replicate 生成失败: {result.get('error')}")
+                        break
+            logger.warning("Replicate 图像生成超时")
+        except Exception as e:
+            logger.error(f"Replicate 图像生成失败: {e}")
+        return None
+
+    def _generate_by_baidu(self, prompt: str, size: str, api_key: str, base_url: str) -> Optional[str]:
+        """百度文心一格图像生成 API"""
+        try:
+            import requests
+            url = f"{base_url}/rest/2.0/ernie-vilg/v2/text2image"
+            headers = {"Content-Type": "application/json"}
+            # 解析 size 如 1792x1024 -> 1024*1024
+            width, height = map(int, size.split("x"))
+            # 百度只支持特定尺寸
+            if width == 1792 and height == 1024:
+                size_str = "16:9"
+            elif width == height:
+                size_str = "1:1"
+            else:
+                size_str = "1:1"
+            payload = {
+                "text": prompt,
+                "image_size": size_str,
+                "style": "adv_flat",
+                "num": 1
+            }
+            logger.info(f"调用百度文心一格图像生成 API...")
+            resp = requests.post(url, params=payload, headers=headers, timeout=120)
+            if resp.status_code != 200:
+                logger.warning(f"百度 API 返回 {resp.status_code}: {resp.text[:200]}")
+                return None
+            data = resp.json()
+            if "data" in data and data["data"]:
+                image_url = data["data"][0].get("url", "")
+                if image_url:
+                    return self._download_from_url(image_url, "baidu")
+            logger.warning(f"百度文心未返回图片 URL: {str(data)[:200]}")
+        except Exception as e:
+            logger.error(f"百度文心图像生成失败: {e}")
+        return None
+
+    def _generate_by_tencent(self, prompt: str, size: str, api_key: str, base_url: str) -> Optional[str]:
+        """腾讯混元图像生成 API"""
+        try:
+            import requests
+            # 腾讯混元使用 HMAC SHA1 认证
+            import hmac
+            import hashlib
+            import time
+            url = f"{base_url}/hunyuan/v1/ai_image"
+            headers = {"Content-Type": "application/json"}
+            width, height = map(int, size.split("x"))
+            payload = {
+                "prompt": prompt,
+                "width": min(width, 1024),
+                "height": min(height, 1024),
+                "version": "v1.5",
+                "samples": 1
+            }
+            logger.info(f"调用腾讯混元图像生成 API...")
+            resp = requests.post(url, json=payload, headers=headers, timeout=120)
+            if resp.status_code != 200:
+                logger.warning(f"腾讯混元 API 返回 {resp.status_code}: {resp.text[:200]}")
+                return None
+            data = resp.json()
+            image_url = data.get("data", {}).get("image_url", "")
+            if image_url:
+                return self._download_from_url(image_url, "tencent")
+            logger.warning(f"腾讯混元未返回图片 URL: {str(data)[:200]}")
+        except Exception as e:
+            logger.error(f"腾讯混元图像生成失败: {e}")
+        return None
+
+    def _generate_by_zhipu(self, prompt: str, size: str, api_key: str, base_url: str) -> Optional[str]:
+        """智谱 CogView-4 图像生成 API"""
+        try:
+            import requests
+            url = f"{base_url}/api/paulgraham/t2i"
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            }
+            width, height = map(int, size.split("x"))
+            payload = {
+                "prompt": prompt,
+                "size": f"{width}x{height}",
+                "n": 1
+            }
+            logger.info(f"调用智谱 CogView-4 图像生成 API...")
+            resp = requests.post(url, json=payload, headers=headers, timeout=120)
+            if resp.status_code != 200:
+                logger.warning(f"智谱 API 返回 {resp.status_code}: {resp.text[:200]}")
+                return None
+            data = resp.json()
+            # 智谱可能返回 data[0].url 或直接 url
+            image_url = (
+                data.get("data", [{}])[0].get("url") or
+                data.get("data", {}).get("url") or
+                data.get("url", "")
+            )
+            if image_url:
+                return self._download_from_url(image_url, "zhipu")
+            logger.warning(f"智谱 CogView 未返回图片 URL: {str(data)[:200]}")
+        except Exception as e:
+            logger.error(f"智谱 CogView 图像生成失败: {e}")
+        return None
+
+    def _generate_by_sensetime(self, prompt: str, size: str, api_key: str, base_url: str) -> Optional[str]:
+        """商汤 nova-smooth 图像生成 API"""
+        try:
+            import requests
+            url = f"{base_url}/v1/visionprotect/risenlp/nlpcg/diffusion"
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            }
+            width, height = map(int, size.split("x"))
+            payload = {
+                "prompt": prompt,
+                "width": width,
+                "height": height,
+                "num_images": 1
+            }
+            logger.info(f"调用商汤 nova-smooth 图像生成 API...")
+            resp = requests.post(url, json=payload, headers=headers, timeout=120)
+            if resp.status_code != 200:
+                logger.warning(f"商汤 API 返回 {resp.status_code}: {resp.text[:200]}")
+                return None
+            data = resp.json()
+            image_url = data.get("data", {}).get("image_url", "")
+            if not image_url:
+                image_url = data.get("image_url", "")
+            if image_url:
+                return self._download_from_url(image_url, "sensetime")
+            logger.warning(f"商汤未返回图片 URL: {str(data)[:200]}")
+        except Exception as e:
+            logger.error(f"商汤图像生成失败: {e}")
+        return None
+
+    def _generate_by_bytedance(self, prompt: str, size: str, api_key: str, base_url: str) -> Optional[str]:
+        """字节豆包 SDXL 图像生成 API"""
+        try:
+            import requests
+            url = f"{base_url}/cv/sdxl/txt2img"
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            }
+            width, height = map(int, size.split("x"))
+            payload = {
+                "prompt": prompt,
+                "width": width,
+                "height": height,
+                "num_images": 1,
+                "style_id": 0
+            }
+            logger.info(f"调用字节豆包 SDXL 图像生成 API...")
+            resp = requests.post(url, json=payload, headers=headers, timeout=120)
+            if resp.status_code != 200:
+                logger.warning(f"字节豆包 API 返回 {resp.status_code}: {resp.text[:200]}")
+                return None
+            data = resp.json()
+            image_url = data.get("data", {}).get("image_url", "")
+            if not image_url:
+                image_url = data.get("image_url", "")
+            if image_url:
+                return self._download_from_url(image_url, "bytedance")
+            logger.warning(f"字节豆包未返回图片 URL: {str(data)[:200]}")
+        except Exception as e:
+            logger.error(f"字节豆包图像生成失败: {e}")
         return None
 
     def _build_ai_prompt(self, prompt: str, img_type: str) -> str:

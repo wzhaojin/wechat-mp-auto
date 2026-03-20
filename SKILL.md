@@ -185,7 +185,7 @@ html = writer.preview_theme()
 # canvas.present(url="data:text/html;charset=utf-8," + html)
 ```
 
-返回包含全部 5 个模板（default、shuimo、wenyan、macaron、henge）的合并预览图，不同模板用不同底色区分，可直观对比各主题配色效果。
+返回包含全部 5 个模板（default、shuimo、wenyan、macaron、houge）的合并预览图，不同模板用不同底色区分，可直观对比各主题配色效果。
 
 ---
 
@@ -257,7 +257,7 @@ wechat-mp-auto/
 - `macaron` - 马卡龙风格（粉紫色）
 - `shuimo` - 水墨中国风
 - `wenyan` - 现代科技风
-- `henge` - 猴哥风格
+- `houge` - 猴哥风格
 
 ---
 
@@ -265,7 +265,7 @@ wechat-mp-auto/
 
 - Skill 代码中不存储任何凭证
 - 日志中不出现完整密钥
-- 发布前必须用户确认
+- 发布前可使用 `--check-only` 参数进行完整性检查，仅检查不推送
 
 ---
 

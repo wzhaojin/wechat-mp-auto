@@ -21,7 +21,7 @@ All notable changes to this project will be documented in this file.
 - 图片来源选择引导机制
 - 本地+网络重复度检测
 - 三阶段完整性检查
-- 5种主题切换（default, henge, shuimo, wenyan, macaron）
+- 5种主题切换（default, houge, shuimo, wenyan, macaron）
 
 ## [0.0.3] - 2026-03-18
 
