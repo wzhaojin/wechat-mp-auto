@@ -886,9 +886,8 @@ class ImageGeneratorSkill(BaseSkill):
         """AWS Bedrock Stability AI 图像生成 API"""
         try:
             import requests
-            import boto3
-            # AWS Bedrock 需要签名，使用 boto3
-            # 或者使用基础 URL 直接调用
+            # AWS Bedrock 需要 AWS Signature V4 签名
+            # API Key 作为 Authorization header（部分网关支持）
             url = f"{base_url}/imagegeneration/stabilityai/stable-diffusion-xl-v1"
             width, height = map(int, size.split("x"))
             payload = {
@@ -1010,7 +1009,7 @@ class ImageGeneratorSkill(BaseSkill):
                 "num": 1
             }
             logger.info(f"调用百度文心一格图像生成 API...")
-            resp = requests.post(url, params=payload, headers=headers, timeout=120)
+            resp = requests.post(url, json=payload, headers=headers, timeout=120)
             if resp.status_code != 200:
                 logger.warning(f"百度 API 返回 {resp.status_code}: {resp.text[:200]}")
                 return None

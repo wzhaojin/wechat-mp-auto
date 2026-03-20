@@ -253,11 +253,11 @@ wechat-mp-auto/
 
 ## 本地主题
 
-- `default` - 默认主题
-- `macaron` - 马卡龙风格（粉紫色）
-- `shuimo` - 水墨中国风
-- `wenyan` - 现代科技风
-- `houge` - 猴哥风格
+- `default` - 默认主题（蓝色 #007AFF）
+- `macaron` - 马卡龙风格（粉紫色 #FF6B9D）
+- `shuimo` - 水墨风格（深灰蓝 #2C3E50）
+- `wenyan` - 文雁风格（深蓝绿 #0066FF）
+- `houge` - 猴哥风格（深蓝橙 #1A1A2E）
 
 ---
 

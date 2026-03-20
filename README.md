@@ -227,11 +227,11 @@ check_article_integrity(draft_content=draft_content, stage="draft")
 
 | 主题 | 说明 |
 |------|------|
-| macaron | 马卡龙风格（粉紫色） |
-| shuimo | 水墨风格 |
-| wenyan | 文言风格 |
-| houge | 猴哥风格 |
-| default | 默认风格 |
+| macaron | 马卡龙风格（粉紫色 #FF6B9D） |
+| shuimo | 水墨风格（深灰蓝 #2C3E50） |
+| wenyan | 文雁风格（深蓝绿 #0066FF） |
+| houge | 猴哥风格（深蓝橙 #1A1A2E） |
+| default | 默认风格（蓝色 #007AFF） |
 
 ## 内容审核详解
 
