@@ -154,19 +154,20 @@ class ArticleWriterSkill:
                         markdown_content = f"![封面]({cover_wechat_url})\n\n" + markdown_content
                 
                 # 插入章节图（在对应的 ## 标题后面）
-                # 先清理可能存在的无效占位图（如本地路径、无效URL），避免重复
+                # AI 可能生成 "第X章: 引言" 格式的标题，需支持可选 "第X章:" 前缀
+                CHAPTER_PREFIX = r'(?:第\d+[章节篇][：:\s]*)?'  # 可选的 "第X章:" 前缀
                 for section_name, section_url in section_wechat_urls.items():
                     # 清理同一章节下可能残留的无效图片引用（本地路径或无效URL，非微信URL）
-                    # 匹配该章节标题后紧跟的一行图片引用（仅清理非微信URL的图片）
-                    cleanup_pattern = r'^(\#{2,3}\s+' + re.escape(section_name) + r'[^\n]*\n)\s*!\[([^\]]*)\]\((?!http)[^\)]+\)\n'
+                    # 支持可选 "第X章:" 前缀
+                    cleanup_pattern = r'^(\#{2,3}\s+' + CHAPTER_PREFIX + re.escape(section_name) + r'[^\n]*\n)\s*!\[([^\]]*)\]\((?!http)[^\)]+\)\n'
                     markdown_content = re.sub(cleanup_pattern, r'\1', markdown_content, flags=re.MULTILINE)
 
                     # 匹配 ## 章节名 或 ### 小节名，在标题行正后方插入图片（独占一行）
-                    # 注意：rf-string 中 {2,3} 需要双花括号转义，否则被当成格式占位符
-                    title_pattern = r'^(\#{2,3}\s+' + re.escape(section_name) + r'[^\n]*\n)'
+                    # 支持可选 "第X章:" 前缀
+                    title_pattern = r'^(\#{2,3}\s+' + CHAPTER_PREFIX + re.escape(section_name) + r'[^\n]*\n)'
                     # 如果标题行后方已有一行有效的微信图片，则跳过（避免重复）
                     already_injected = re.search(
-                        r'^(\#{2,3}\s+' + re.escape(section_name) + r'[^\n]*\n)\s*!\[([^\]]*)\]\(http[^\)]+\)\n',
+                        r'^(\#{2,3}\s+' + CHAPTER_PREFIX + re.escape(section_name) + r'[^\n]*\n)\s*!\[([^\]]*)\]\(http[^\)]+\)\n',
                         markdown_content, flags=re.MULTILINE
                     )
                     if already_injected:
@@ -653,9 +654,9 @@ class ArticleWriterSkill:
                 "bg": "#f0f4ff",
                 "label_bg": "#007AFF",
             },
-            "henge": {
-                "name_cn": "横戈",
-                "name_en": "henge",
+            "houge": {
+                "name_cn": "猴哥",
+                "name_en": "houge",
                 "primary": "#333333",
                 "bg": "#f0f0f0",
                 "label_bg": "#333333",

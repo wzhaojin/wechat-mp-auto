@@ -4,18 +4,19 @@
 
 [![Python Version](https://img.shields.io/badge/python-3.9+-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE.txt)
-[![Version](https://img.shields.io/badge/version-v0.0.5-blue)](SKILL.md)
+[![Version](https://img.shields.io/badge/version-v0.0.6-blue)](SKILL.md)
 
 ## 功能特性
 
-- **选题调研** - 联网搜索可信源，自动生成文章大纲
-- **文章写作** - Markdown 转微信 HTML，支持多种格式，**自动插入封面和章节插图**
-- **智能配图** - Pexels/Unsplash 图库 + AI 生图模型（可选择）
-- **图片处理** - 自动去水印、调整微信尺寸、压缩
-- **内容审核** - 本地+网络重复度检测、敏感词扫描、**三阶段完整性检查**
-- **模板管理** - 本地 ↔ 微信公众平台双向同步
+本 Skill 由 **AI 模型作为编排者**，Python 代码提供原子化工具能力。AI 阅读 SKILL.md 后自行决定调用哪些工具，完成全部流程。
+
+- **选题调研** - 级联搜索（Tavily → DuckDuckGo → 百度），多源自动切换
+- **文章写作** - AI 根据提示词生成 Markdown，Python 负责格式转换
+- **智能配图** - Pexels/Unsplash 图库搜索 + AI 生图（可选择）
+- **图片处理** - 调整微信尺寸、压缩
+- **内容审核** - 本地+网络重复度检测、敏感词扫描
+- **模板管理** - 5 种本地主题切换（default/macaron/shuimo/wenyan/houge）
 - **草稿发布** - 一键推送到公众号草稿箱
-- **数据分析** - 阅读量、点赞数统计
 
 ## 快速开始
 
@@ -65,162 +66,39 @@ export TAVILY_API_KEY="your_tavily_key"
 
 ## 使用方法
 
-### 命令行发布文章
+本 Skill 由 **AI 模型作为编排者**，所有流程通过 AI 读取 SKILL.md 后自行调用工具完成，无需手动编写 Python 脚本。
 
-```bash
-cd src
-python3 publish.py --markdown ../article.md --title "文章标题" --author "作者"
-```
+**详细工具说明和编排流程见 [SKILL.md](./SKILL.md)。**
 
-**完整参数：**
-```bash
-python3 publish.py \
-  --markdown article.md \
-  --title "我的文章" \
-  --author "贾维斯" \
-  --cover cover.jpg \
-  --theme macaron \
-  --check-only
-```
-
-| 参数 | 简写 | 说明 | 默认值 |
-|------|------|------|--------|
-| --markdown | -m | Markdown 文件路径 | 必填 |
-| --title | -t | 文章标题 | 文件名 |
-| --author | -a | 作者 | 贾维斯 |
-| --cover | -c | 封面图路径 | 自动查找 |
-| --source-url | -s | 原文链接 | https://openclaw.ai |
-| --theme | | 主题名称 | macaron |
-| --check-only | | 仅检查不推送 | false |
-| --verbose | -v | 显示详细日志 | false |
-
-### Python API
-
-#### 1. 自动化文章生成（带配图）
+以下代码仅供手动调试参考：
 
 ```python
+from skills.topic_research import TopicResearchSkill
 from skills.article_writer import ArticleWriterSkill
-
-writer = ArticleWriterSkill()
-
-# 定义文章大纲
-outline = {
-    'title': 'AI 助手介绍',
-    'sections': [
-        {'name': '什么是 AI 助手', 'key_points': ['定义', '发展历史']},
-        {'name': '功能特点', 'key_points': ['智能对话', '任务自动化']},
-    ]
-}
-
-# 生成文章（generate_images=True 自动生成配图）
-result = writer.write_article('主题', outline, generate_images=True)
-
-# 返回结果包含：
-# - result['markdown']: Markdown 内容（含图片语法）
-# - result['html']: 转换后的 HTML
-# - result['title']: 文章标题
-# - result['cover_path']: 封面图路径
-
-print(result['markdown'])
-```
-
-#### 2. 三阶段完整性检查
-
-```python
-from publish import check_article_integrity
-
-# 检查点1：Markdown 生成后
-result1 = check_article_integrity(markdown=markdown, stage="markdown")
-
-# 检查点2：HTML 转换后
-result2 = check_article_integrity(markdown=markdown, html=html, stage="html")
-
-# 检查点3：草稿上传后
-result3 = check_article_integrity(draft_content=draft_content, stage="draft")
-
-# 检查结果
-if not result1['passed']:
-    print(f"问题: {result1['issues']}")
-if result1['warnings']:
-    print(f"警告: {result1['warnings']}")
-```
-
-#### 3. 内容审核
-
-```python
-from skills.content_reviewer import ContentReviewerSkill
-
-reviewer = ContentReviewerSkill()
-
-# 审核文章
-article = {'markdown': markdown, 'content': html}
-result = reviewer.review_article(article)
-
-# 结果包含：
-print(f'通过: {result["passed"]}')
-print(f'重复度: {result["plagiarism"]["similarity"]}%')
-print(f'是否重复: {result["plagiarism"]["is_duplicated"]}')
-print(f'敏感词: {result["prohibited"]["violations"]}')
-
-# 手动检查网络重复度（异步）
-network_result = reviewer.check_network_plagiarism(markdown)
-# 等待后获取结果
-import time
-time.sleep(15)
-final = reviewer.get_network_result(network_result)
-print(f'网络重复度: {final["match_ratio"]}%')
-```
-
-#### 4. 完整发布流程
-
-```python
-from skills.article_writer import ArticleWriterSkill
+from skills.image_generator import ImageGeneratorSkill
 from skills.material_skill import MaterialSkill
 from skills.draft_skill import DraftSkill
-from publish import check_article_integrity
-from config import Config
-from token_manager import TokenManager
+from skills.content_reviewer import ContentReviewerSkill
 
-# 初始化
-config = Config()
-app_id, app_secret = config.get_credentials()
-token_mgr = TokenManager(app_id, app_secret)
+# 调研
+research = TopicResearchSkill().research_topic("AI大模型应用")
 
-writer = ArticleWriterSkill()
-material = MaterialSkill(token_mgr)
-draft = DraftSkill(token_mgr)
+# 生成大纲
+outline = TopicResearchSkill().generate_outline("AI大模型应用", research)
 
-# 1. 生成文章
-outline = {
-    'title': '我的文章',
-    'sections': [{'name': '第一章', 'key_points': ['要点1']}]
-}
-result = writer.write_article('主题', outline, generate_images=True)
-markdown = result['markdown']
-html = result['html']
+# 内容审核（Markdown 生成后）
+review = ContentReviewerSkill().review_article({"markdown": markdown_text})
+if not review["passed"]:
+    print("审核未通过:", review)
 
-# 2. 检查点1
-check_article_integrity(markdown=markdown, stage="markdown")
+# 转换 HTML
+html = ArticleWriterSkill().convert_to_html(markdown_text, theme="macaron")
 
-# 3. 检查点2
-check_article_integrity(markdown=markdown, html=html, stage="html")
+# 上传图片
+result = MaterialSkill().upload_image("/path/to/image.jpg")
 
-# 4. 上传图片到微信
-html_with_urls, processed = insert_images_to_content(html, material)
-
-# 5. 创建草稿
-article = {
-    'title': result['title'],
-    'author': '贾维斯',
-    'content': '<meta charset="utf-8">\n' + html_with_urls,
-    'thumb_media_id': cover_media_id,
-    'content_source_url': 'https://openclaw.ai'
-}
-draft_result = draft.create_draft([article])
-
-# 6. 检查点3
-draft_content = draft.get_draft(draft_result['media_id'])['content']
-check_article_integrity(draft_content=draft_content, stage="draft")
+# 创建草稿
+DraftSkill().create_draft([{"title": "...", "content": html, ...}])
 ```
 
 ## 支持的主题
@@ -253,35 +131,28 @@ check_article_integrity(draft_content=draft_content, stage="draft")
 
 ```
 wechat-mp-auto/
-├── README.md              # 本文件
-├── SKILL.md              # OpenClaw Skill 定义
-├── LICENSE.txt           # MIT 许可证
-├── requirements.txt      # Python 依赖
-├── pyproject.toml       # 项目配置
-├── test_all.py          # 测试脚本
-├── test_conversion.py   # 转换测试
+├── SKILL.md                    # AI 编排指南（本 Skill 的核心文档）
+├── metadata.json                # Skill 元数据
+├── README.md                   # 本文件（人类参考）
+├── requirements.txt           # Python 依赖
+├── pyproject.toml             # 项目配置
 ├── src/
-│   ├── config.py           # 配置管理
-│   ├── token_manager.py   # Token 缓存
-│   ├── exceptions.py      # 异常定义
-│   ├── publish.py         # 发布脚本（含检查函数）
+│   ├── config.py             # 配置管理
+│   ├── token_manager.py      # 微信 Access Token 管理
+│   ├── exceptions.py         # 异常定义
 │   └── skills/
-│       ├── article_writer.py      # Markdown 转 HTML + 自动插图
-│       ├── image_generator.py    # 图片生成
-│       ├── image_processor.py    # 图片处理
-│       ├── content_reviewer.py   # 内容审核（重复度、敏感词、网络检测）
-│       ├── material_skill.py     # 素材管理
-│       ├── draft_skill.py        # 草稿箱
-│       ├── publish_skill.py      # 发布管理
-│       ├── topic_research.py     # 选题调研
-│       ├── template_skill.py    # 模板管理
-│       └── analytics_skill.py   # 数据分析
-├── utils/                     # 工具函数
-├── formatters/               # 格式化
-└── themes/                   # 主题配置
+│       ├── topic_research.py  # 调研工具（research_topic / generate_outline）
+│       ├── article_writer.py  # 格式转换工具（convert_to_html）
+│       ├── image_generator.py # 图片工具（search_image / generate_image）
+│       ├── material_skill.py # 图片上传工具（upload_image）
+│       ├── draft_skill.py     # 草稿推送工具（create_draft）
+│       └── ...                # 其他辅助模块
+└── themes/                   # HTML 主题配色
+    ├── default.yaml
     ├── macaron.yaml
     ├── shuimo.yaml
-    └── ...
+    ├── wenyan.yaml
+    └── houge.yaml
 ```
 
 ## 注意事项

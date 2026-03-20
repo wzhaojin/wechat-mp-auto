@@ -1324,6 +1324,51 @@ class ImageGeneratorSkill(BaseSkill):
             logger.error(f"[{img_type}] 生成上传失败: {e}")
             return result
 
+    def search_image(self, query: str, count: int = 5) -> List[Dict]:
+        """搜索图库图片并下载到本地
+
+        Args:
+            query: 搜索关键词
+            count: 请求图片数量，默认5张
+
+        Returns:
+            图片信息列表，每个元素含 url（原始链接）和 local_path（本地文件路径）
+        """
+        if not query or not isinstance(query, str):
+            return []
+        if not isinstance(count, int) or count < 1:
+            count = 5
+
+        results = []
+        images = self._search_all(query, count)
+        for img in images:
+            local_path = self._download_image(img, "search")
+            if local_path:
+                results.append({
+                    "url": img.get("url", ""),
+                    "local_path": local_path
+                })
+            if len(results) >= count:
+                break
+        return results
+
+    def generate_image(self, prompt: str, size: str = "1024x1024") -> Dict:
+        """AI 生成图片
+
+        Args:
+            prompt: 图片描述提示词
+            size: 图片尺寸，默认 1024x1024（可以是 1792x1024 用于封面）
+
+        Returns:
+            {"local_path": "本地文件路径"}
+        """
+        if not prompt or not isinstance(prompt, str):
+            return {"local_path": None}
+
+        img_type = "cover" if "x" in size and int(size.split("x")[0]) > 1024 else "illustration"
+        local_path = self._generate_by_ai(prompt, img_type)
+        return {"local_path": local_path}
+
     def batch_generate(self, title: str, sections: List[str], keywords: List[str]) -> Dict:
         """批量生成图片"""
         if not title or not isinstance(title, str):

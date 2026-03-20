@@ -1,221 +1,274 @@
 # wechat-mp-auto - 微信公众号自动化 Skill
 
-**版本**: v0.0.5  
+**版本**: v0.0.6
 **描述**: 微信公众号文章从选题到发布的全流程自动化
 
 ---
 
-## 功能特性
+## 架构理念
 
-- 选题调研 - 级联搜索（ Tavily → DuckDuckGo → 百度），多源自动切换
-- 文章写作 - Markdown 转微信 HTML（**自动插入封面和章节插图**）
-- 智能配图 - AI 生图 + Pexels/Unsplash 图库（首次引导选择图片来源）
-- **内容审核** - 本地+网络重复度检测、敏感词扫描、**三阶段完整性检查**
-- 本地主题 - 5种主题切换（**支持预览**）
-- 数据分析 - 阅读量、点赞数统计
+本 Skill 由 **AI 模型作为编排者**，Python 代码提供原子化工具能力。AI 读取本 SKILL.md 后自行决定调用哪些工具、完成全部流程。
+
+Python 代码不包含任何 AI 调用逻辑，所有生成、推理、判断均由 AI 模型完成。
 
 ---
 
-## 安装
+## 工具清单
 
-```bash
-pip install -r requirements.txt
-```
+AI 可调用的所有工具如下，调用时请传入完整参数：
 
-### 配置
+### 1. 调研工具
 
-1. 在 `~/.config/wechat-mp-auto/config.json` 配置微信凭证
-2. 或在 `~/.openclaw/.env` 中配置环境变量
-3. 可选：配置图片API密钥（PEXELS_API_KEY、UNSPLASH_API_KEY等）
+**`research_topic(topic: str) -> dict`**
+- 输入：文章主题（字符串）
+- 输出：`{"search_results": [...], "summary": "..."}`
+- 作用：对给定主题进行网络调研，返回搜索结果摘要
+- 内部级联：Tavily → DuckDuckGo → 百度，任一成功即返回
 
 ---
 
-## 快速开始
-
-### 1. 配置微信公众号凭证
-
-获取路径：
-1. 登录 https://mp.weixin.qq.com/
-2. 进入 **开发** → **基本配置**
-3. 获取 **AppID** 和 **AppSecret**
-4. 设置 **IP 白名单**
-
-配置文件：`~/.config/wechat-mp-auto/config.json`
-
+**`generate_outline(topic: str, research: dict) -> dict`**
+- 输入：主题字符串 + research_topic 的返回结果
+- 输出：
 ```json
 {
-  "app_id": "wx开头的18位ID",
-  "app_secret": "32位密钥",
-  "default_template": {
-    "type": "local",
-    "id": "shuimo"
-  }
+  "title": "深度解析：XXX",
+  "sections": [
+    {"name": "引言", "description": "...", "key_points": ["要点1", "要点2"]},
+    {"name": "核心内容", "description": "...", "key_points": [...]},
+    ...
+  ]
 }
 ```
-
-### 2. 配置图片 API（可选）
-
-**图片来源有两种方式，首次使用时系统会引导选择：**
-
-#### 方式一：图片接口检索（推荐）
-
-**Pexels**（推荐）
-- 官网：https://www.pexels.com/api/
-- 免费额度：每月 200 请求
-- 获取 Key：注册 → API → Your API Key
-
-**Unsplash**
-- 官网：https://unsplash.com/developers
-- 免费额度：每月 50 请求
-- 获取 Key：Create New Application → Access Key
-
-```bash
-# 写入 ~/.openclaw/.env
-PEXELS_API_KEY=你的Key
-UNSPLASH_API_KEY=你的Key
-```
-
-#### 方式二：AI 生图
-
-**支持的生图模型 Provider：**
-
-| 分类 | Provider | 模型 | 说明 |
-|------|----------|------|------|
-| 国内 | ali-bailian | wanx2.1 | 阿里云通义万图 |
-| 国内 | minimax-cn | image-01 | MiniMax 生图 |
-| 国内 | baidu | ernie-vilg-v2 | 百度文心一格 |
-| 国内 | tencent | hunyuan-image | 腾讯混元 |
-| 国内 | zhipu | cogview-4 | 智谱 CogView |
-| 国内 | sensetime | nova-smooth | 商汤 |
-| 国内 | bytedance | sdxl-txt2img | 字节豆包 |
-| 国外 | openai | dall-e-3 | OpenAI DALL-E 3 |
-| 国外 | google | imagen-3 | Google Imagen 3 |
-| 国外 | stability-ai | stable-diffusion-xl（SDXL） | Stability AI |
-| 国外 | replicate | flux-schnell | Replicate Flux |
-| 国外 | aws-bedrock | stability.stable-diffusion-xl-v1 | AWS Bedrock |
-| 国外 | azure-openai | dall-e-3 | Azure DALL-E 3 |
-
-**配置方式：**
-在 OpenClaw 配置文件 `~/.openclaw/openclaw.json` 中配置相应的模型和 API Key。
-
-**探测机制：**
-- **初筛**：读取 OpenClaw 配置时，自动过滤 `input` 包含 `image` 或 `api` 类型包含 `image` 的模型
-- **实测探测**：对初筛通过的模型，实际调用其图像生成 API，验证是否真正具备生图能力
-- **缓存**：探测结果缓存 24 小时，避免重复探测
+- 作用：根据调研结果生成文章大纲，包含 4 个标准章节（引言/核心内容/实践方法/结论）
 
 ---
 
-### 3. 配置网络重复度检测（可选）
+### 2. 写作工具
 
-**Tavily**（推荐）
-- 官网：https://tavily.com/
-- 免费额度：每月 1000 请求
-- 获取 Key：注册 → API Key
+**`convert_to_html(markdown: str, theme: str) -> str`**
+- 输入：Markdown 格式文章内容 + 主题名称
+- 输出：微信可用的 HTML 字符串
+- 主题可选值：
+  - `default` — 默认蓝色
+  - `macaron` — 马卡龙粉紫色
+  - `shuimo` — 水墨深灰蓝
+  - `wenyan` — 文雁深蓝绿
+  - `houge` — 猴哥深蓝橙
 
-```bash
-# 方式1：环境变量
-export TAVILY_API_KEY=你的Key
+---
 
-# 方式2：配置文件
-# ~/.config/wechat-mp-auto/config.json
+### 3. 图片工具
+
+**`search_image(query: str, count: int) -> list`**
+- 输入：搜索关键词（字符串），请求图片数量（整数）
+- 输出：图片信息列表，每个元素含 `url`（下载链接）和 `local_path`（本地缓存路径）
+- 作用：通过 Pexels/Unsplash 图库搜索并下载图片，返回本地文件路径
+- 注意：如未配置图库 API Key，此工具不可用
+
+---
+
+**`generate_image(prompt: str, size: str) -> dict`**
+- 输入：图片描述提示词（字符串），图片尺寸（字符串，格式如 `"1024x1024"`）
+- 输出：`{"local_path": "本地文件路径"}`
+- 作用：调用 AI 生图模型生成图片，返回本地保存路径
+
+---
+
+**`upload_image(file_path: str) -> dict`**
+- 输入：本地图片文件路径（字符串）
+- 输出：`{"media_id": "...", "url": "微信图片URL"}`
+- 作用：将本地图片上传至微信素材库，返回微信图片 URL 和 media_id
+- 注意：上传前需确保图片文件存在，支持 JPG/PNG
+
+---
+
+### 4. 内容审核工具
+
+**`review_article(article: dict) -> dict`**
+- 输入：文章对象，格式如下：
+```json
 {
-  "tavily_api_key": "你的Key"
+  "markdown": "Markdown 内容（字符串）",
+  "content": "HTML 内容（字符串，可选）"
 }
 ```
+- 输出：
+```json
+{
+  "passed": true/false,
+  "plagiarism": {"similarity": 0, "is_duplicated": false},
+  "prohibited": {"violations": []}
+}
+```
+- 作用：审核文章内容，返回是否通过及问题列表
 
 ---
 
-## 内容审核
+### 5. 草稿工具
 
-### 本地重复度检测
-- **算法**：n-gram + Jaccard 相似度
-- **阈值**：30% 以上判定为重复
-- **历史记录**：自动保存到 `~/.cache/wechat-mp-auto/article_history.json`
-
-### 网络重复度检测
-- **算法**：提取关键句 → 级联搜索 → 相似度比对
-- **阈值**：10% 以上判定为匹配
-- **特点**：异步执行，不阻塞主流程
-
-### 级联搜索机制
-
-选题调研和网络检测均采用**级联搜索**策略，多个搜索源按优先级自动切换：
-
-| 优先级 | 搜索源 | 说明 | 需要 API Key |
-|--------|--------|------|-------------|
-| 1 | Tavily | 推荐，快速准确 | 是（免费额度1000/月） |
-| 2 | DuckDuckGo | 无需 Key，需可访问外网 | 否 |
-| 3 | 百度 | 国内可用，无需 Key | 否 |
-
-**搜索流程：**
+**`create_draft(articles: list) -> dict`**
+- 输入：文章列表，每篇格式如下：
+```json
+{
+  "title": "文章标题",
+  "author": "贾维斯",
+  "content": "HTML内容（字符串）",
+  "thumb_media_id": "封面缩略图的media_id",
+  "content_source_url": "原文链接，可填 https://openclaw.ai"
+}
 ```
-尝试 Tavily → [失败] → DuckDuckGo → [失败] → 百度 → [全部失败] → 返回默认结果
-```
+- 输出：`{"media_id": "草稿ID", "msg": "..."}`
+- 作用：将文章推送到微信公众号草稿箱
 
-**特点：**
-- 任何一个源成功即返回，不继续尝试后续
-- 失败原因详细记录到日志
-- 网络检测中的限流（429）会自动重试一次
+---
 
-### 敏感词检测
-检测词汇：
+## AI 编排流程
+
+AI 读取本 SKILL.md 后，按以下步骤执行。每一步都需要显式调用对应工具：
+
 ```
-反动、暴力、色情、赌博、毒品、诈骗、谣言
+第一步：调研
+  → 调用 research_topic(topic)
+  → 获得 search_results 和 summary
+
+第二步：生成大纲
+  → 调用 generate_outline(topic, research结果)
+  → 获得 title 和 sections（含章节名、描述、要点）
+
+第三步：组装提示词并生成文章
+  → 根据第二步的大纲，自行组装提示词（见下方"提示词组装规范"）
+  → 用大模型根据提示词生成完整的 Markdown 文章
+  → 注意：大模型直接输出 Markdown，不需要调用任何工具来"写作"
+
+第四步：内容审核
+  → 调用 review_article({"markdown": 第三步生成的Markdown})
+  → 如 passed=false 或存在 prohibited.violations，应重新生成或修改内容
+  → 审核通过后再进入第五步
+
+第五步：转换格式
+  → 调用 convert_to_html(第三步生成的Markdown, theme参数)
+  → 获得 HTML 字符串
+
+第六步：生成并上传配图
+  → 生成封面图：
+    - 优先调用 search_image(文章标题关键词, count=5)，下载到本地
+    - 或调用 generate_image(封面图描述, size="900x500")，得到本地路径
+  → 调用 upload_image(封面图本地路径) → 获得 thumb_media_id 和封面微信URL
+  → 为每个章节生成一张配图：
+    - 优先调用 search_image(章节标题关键词, count=3)
+    - 或调用 generate_image(章节图描述, size="900x500")
+  → 分别调用 upload_image(章节图本地路径) → 获得章节图的微信URL
+
+第七步：注入图片URL
+  → 将第六步获得的微信图片URL，一一替换到 HTML 中对应占位符：
+    - 封面图：`src="cover_image_url"` → 替换为封面微信URL
+    - 章节图：`src="章节标题_url"` → 替换为对应章节的微信URL
+  → **每个占位符必须单独对应**，封面和每个章节图的 src 均不同
+  → 如 HTML 中尚无图片标签，则在对应位置插入：
+    - 封面图：文章开头，标题后插入 <img src="封面微信URL">
+    - 章节图：每个 ## 章节标题后插入 <img src="对应章节微信URL">
+
+第八步：推送草稿
+  → 调用 create_draft([{
+    "title": 文章标题,
+    "author": "贾维斯",
+    "content": 注入了图片URL的完整HTML,
+    "thumb_media_id": 封面图的media_id,
+    "content_source_url": "https://openclaw.ai"
+  }])
+  → 获得草稿ID，流程完成
 ```
 
 ---
 
-## 图片来源选择
-
-首次调用 `write_article(generate_images=True)` 或图片生成方法时，系统会引导选择图片来源方式。
-
-### 选择流程
-
-1. **图片来源选择**
-   - `AI生图`：调用 AI 模型生成图片（需选择模型）
-   - `图片接口检索`：从 Pexels/Unsplash 图库搜索（需配置 API key）
-
-2. **模型选择**（选择 AI 生图时）
-   系统从 OpenClaw 配置中动态读取生图模型列表，并通过实测探测验证模型是否真正具备生图能力。
-   如果未配置任何生图模型，系统会提示配置或改用图片检索方式。
-
-### 偏好持久化
-
-选择结果写入 `~/.config/wechat-mp-auto/config.json`，后续调用不再提示。
-如需更改，删除配置文件中 `image_source` 和 `ai_model` 字段后重新触发。
-
-### 环境变量
-
-| 变量名 | 说明 |
-|--------|------|
-| `PEXELS_API_KEY` | Pexels 免费图库 API Key |
-| `UNSPLASH_API_KEY` | Unsplash 免费图库 API Key |
-
 ---
 
-## 模板预览
+## 批量生成多篇文章
 
-查看所有 5 个模板的视觉效果：
+单篇文章流程（第一步至第八步）为一轮。当需要生成多篇文章时，按以下方式循环执行：
 
-```python
-from skills.article_writer import ArticleWriterSkill
-writer = ArticleWriterSkill()
-html = writer.preview_theme()
-# 用 canvas 渲染：
-# canvas.present(url="data:text/html;charset=utf-8," + html)
+```
+对第 1 篇文章执行第一步至第八步
+  → 等待第八步完成后，再开始第 2 篇
+
+对第 2 篇文章执行第一步至第八步
+  → 等待完成后，再开始第 3 篇
+
+... 以此类推
 ```
 
-返回包含全部 5 个模板（default、shuimo、wenyan、macaron、houge）的合并预览图，不同模板用不同底色区分，可直观对比各主题配色效果。
+每篇文章之间相互独立，主题、大纲、写作风格均可不同。
 
 ---
 
-## 三阶段完整性检查
+## 提示词组装规范
 
-| 检查点 | 时机 | 检查内容 |
-|--------|------|----------|
-| 检查点1 | Markdown 生成后 | 标题数量、图片语法、文件是否存在 |
-| 检查点2 | HTML 转换后 | HTML 标签完整性、图片 src 是否为空、是否有本地图片未上传 |
-| 检查点3 | 草稿上传后 | 草稿中的图片（src/data-src）、编码检测 |
+第三步中，AI 组装提示词时应包含以下部分，以结构化方式呈现：
+
+```
+## 文章主题
+{topic}
+
+## 文章大纲
+{section_name_1}
+  描述：{section.description}
+  关键要点：{section.key_points列表}
+
+{section_name_2}
+  ...
+
+## 调研资料摘要
+{research.summary}
+（包含3-5条最相关的搜索结果摘要）
+
+## 写作风格要求
+{从以下选项中选择或组合：}
+- 口语化 / 正式 / 俏皮 / 专业 / 通俗易懂
+- 段落之间逻辑连贯，有真知灼见
+- 禁止空洞套话
+
+## 输出格式要求
+- 主标题：# 标题（一级，仅一个）
+- 章节标题：## 二级标题
+- 子章节：### 三级标题
+- 重点词语：**加粗**
+- 代码块：```bash 代码 ``` 格式
+- 列表：- 格式
+- 全文字数：不超过 7200 字
+- 禁止重复章节或段落
+
+## 配图标记说明
+- 封面图位置：在文章开头，标题后插入 ![封面](cover_image_url)
+- 章节图位置：在每个 ## 章节标题正后方插入 ![章节标题](章节标题_url)
+- **重要**：每个章节的占位符必须是**唯一的**，占位符名称 = 章节标题（不含空格和特殊字符）+"_url"
+  - 示例：章节"OpenClaw 简介" → `![OpenClaw简介](OpenClaw简介_url)`
+  - 示例：章节"环境准备" → `![环境准备](环境准备_url)`
+  - **禁止**所有章节图使用相同的占位符（如 `section_image_url`）
+- 占位符说明：图片 URL 暂时填入上述占位符，后续第五、六步会上传真实微信图片URL并替换
+
+## 重要约束
+- 输出内容到此为止，不输出任何检查清单、打分表、自评或额外说明
+- 全文每个章节只出现一次，不得重复输出任何章节或段落
+```
+
+---
+
+## 配置要求
+
+### 必需
+
+- **微信公众号凭证**（二选一）：
+  1. `~/.config/wechat-mp-auto/config.json` 中配置 `app_id` 和 `app_secret`
+  2. 或在 `~/.openclaw/.env` 中配置环境变量 `WECHAT_APP_ID` 和 `WECHAT_APP_SECRET`
+- **IP 白名单**：确保运行环境的出口 IP 已加入微信公众号后台的白名单
+
+### 可选
+
+- **图片来源**（二选一）：
+  - `PEXELS_API_KEY`：Pexels 图库（每月 200 请求）
+  - `UNSPLASH_API_KEY`：Unsplash 图库（每月 50 请求）
+  - 环境变量或 `~/.openclaw/.env` 中配置
 
 ---
 
@@ -223,45 +276,25 @@ html = writer.preview_theme()
 
 ```
 wechat-mp-auto/
-├── SKILL.md                    # 本文档
-├── _meta.json                   # 元数据
-├── metadata.json                # Skill 描述
-├── LICENSE.txt                  # 许可证
+├── SKILL.md                    # 本文档（AI 编排指南）
+├── metadata.json                # Skill 元数据
+├── _meta.json                  # ClawHub 元数据
 ├── README.md                    # 人类使用说明
-├── package.json                 # 依赖定义
-├── pyproject.toml              # 项目配置
 ├── requirements.txt            # Python 依赖
-├── test_all.py                # 测试脚本
-├── test_conversion.py         # 转换测试
 ├── src/
-│   ├── __init__.py
 │   ├── config.py              # 配置管理
-│   ├── token_manager.py       # Token 管理
+│   ├── token_manager.py       # 微信 Access Token 管理
 │   ├── exceptions.py         # 异常定义
-│   ├── first_time_setup.py   # 首次使用引导
-│   ├── publish.py            # 发布脚本（含检查函数）
 │   └── skills/
-│       ├── __init__.py
+│       ├── topic_research.py  # 调研工具（research_topic / generate_outline）
+│       ├── article_writer.py  # 格式转换工具（convert_to_html）
+│       ├── image_generator.py # 图片工具（search_image / generate_image）
+│       ├── material_skill.py  # 图片上传工具（upload_image）
+│       ├── draft_skill.py     # 草稿推送工具（create_draft）
 │       ├── base_skill.py      # 基础类
-│       ├── topic_research.py # 选题调研
-│       ├── article_writer.py # 文章写作（含 Markdown 转 HTML、自动插图）
-│       ├── image_generator.py # 配图生成（Pexels/Unsplash）
-│       ├── image_processor.py # 图片处理
-│       ├── content_reviewer.py # 内容审核（重复度、敏感词、网络检测）
-│       ├── template_design.py # 模板设计
-│       ├── template_skill.py # 本地模板管理
-│       ├── template_sync.py  # 模板同步（注：无 API）
-│       ├── draft_skill.py   # 草稿箱管理
-│       ├── publish_skill.py # 发布管理
-│       ├── material_skill.py # 素材管理
-│       └── analytics_skill.py # 数据分析
-├── utils/
-│   ├── __init__.py
-│   ├── logger.py             # 日志（脱敏）
-│   └── validators.py         # 参数验证
-├── formatters/
-│   └── __init__.py
-└── themes/                    # 本地主题
+│       ├── content_reviewer.py # 内容审核
+│       └── ...                # 其他辅助模块
+└── themes/                    # HTML 主题配色
     ├── default.yaml
     ├── macaron.yaml
     ├── shuimo.yaml
@@ -271,89 +304,8 @@ wechat-mp-auto/
 
 ---
 
-## 本地主题
-
-- `default` - 默认主题（蓝色 #007AFF）
-- `macaron` - 马卡龙风格（粉紫色 #FF6B9D）
-- `shuimo` - 水墨风格（深灰蓝 #2C3E50）
-- `wenyan` - 文雁风格（深蓝绿 #0066FF）
-- `houge` - 猴哥风格（深蓝橙 #1A1A2E）
-
----
-
 ## 安全规范
 
 - Skill 代码中不存储任何凭证
-- 日志中不出现完整密钥
-- 发布前可使用 `--check-only` 参数进行完整性检查，仅检查不推送
-
----
-
-## 注意事项
-
-1. 微信"文章模板"无开放 API，无法下载/上传
-2. 图片优先使用 Pexels，无效则切换 Unsplash
-3. Markdown 转 HTML 内置在 article_writer 中
-4. 网络重复度检测需要配置 TAVILY_API_KEY
-5. 文章生成时会自动查找 cache 目录中的已有图片
-
----
-
-## 使用示例
-
-### 1. 生成文章（带自动配图）
-```python
-from skills.article_writer import ArticleWriterSkill
-
-writer = ArticleWriterSkill()
-
-outline = {
-    'title': 'AI 助手介绍',
-    'sections': [
-        {'name': '什么是 AI 助手', 'key_points': ['定义', '发展历史']},
-        {'name': '功能特点', 'key_points': ['智能对话', '任务自动化']},
-    ]
-}
-
-result = writer.write_article('主题', outline, generate_images=True)
-# result 包含: markdown, html, title, cover_path 等
-```
-
-### 2. 发布文章（含三阶段检查）
-```python
-from publish import check_article_integrity
-
-# 检查点1
-check_article_integrity(markdown=md, stage="markdown")
-
-# 检查点2
-check_article_integrity(markdown=md, html=html, stage="html")
-
-# ... 上传图片、创建草稿 ...
-
-# 检查点3
-check_article_integrity(draft_content=content, stage="draft")
-```
-
-### 3. 内容审核
-```python
-from skills.content_reviewer import ContentReviewerSkill
-
-reviewer = ContentReviewerSkill()
-
-# 审核文章
-result = reviewer.review_article({
-    'markdown': markdown,
-    'content': html
-})
-
-print(f'通过: {result["passed"]}')
-print(f'重复度: {result["plagiarism"]["similarity"]}%')
-print(f'敏感词: {result["prohibited"]["violations"]}')
-```
-
----
-
-## License
-
-MIT
+- 日志中自动脱敏（密钥前 4 位 + ... + 后 4 位）
+- 所有凭证从配置文件或环境变量读取，不硬编码
