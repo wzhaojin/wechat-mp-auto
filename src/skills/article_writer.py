@@ -32,7 +32,11 @@ class ArticleWriterSkill:
         return self._image_generator
     
     def write_article(self, topic: str, outline: Dict, template: Optional[Dict] = None, 
-                      generate_images: bool = True) -> Dict:
+                      generate_images: bool = True,
+                      material_skill=None,
+                      content: Optional[str] = None,
+                      section_images: Optional[Dict[str, str]] = None,
+                      cover_image: Optional[str] = None) -> Dict:
         """撰写文章
         
         Args:
@@ -40,6 +44,10 @@ class ArticleWriterSkill:
             outline: 文章大纲，包含 title 和 sections
             template: 模板配置
             generate_images: 是否自动生成配图（默认 True）
+            material_skill: 素材管理技能实例，用于上传图片（可选）
+            content: 预设的文章内容（markdown格式），有值时优先使用此内容而非outline生成
+            section_images: 预设的章节图片URL字典，格式 {"章节名": "图片URL"}
+            cover_image: 预设的封面图片URL，有值时跳过封面生成
         """
         try:
             # 参数验证
@@ -59,79 +67,132 @@ class ArticleWriterSkill:
             # 生成内容
             sections = outline.get("sections", [])
             title = outline.get('title', topic)
-            content_parts = [f"# {title}\n"]
             
             # 确保 cache 目录存在
             if not self._cache_dir.exists():
                 self._cache_dir.mkdir(parents=True, exist_ok=True)
             
-            # 1. 生成封面图
-            cover_path = None
-            cover_filename = None
+            # 用于跟踪所有图片URL（local_path -> wechat_url）
+            image_url_map = {}
             
-            if generate_images:
+            # ========== 1. 处理封面图 ==========
+            cover_wechat_url = cover_image  # 预设的封面URL
+            cover_path = None
+            
+            if not cover_wechat_url and generate_images:
+                img_gen = self._get_image_generator()
+                if img_gen and material_skill:
+                    # 检查用户是否已完成图片来源选择
+                    choice_check = img_gen._check_and_prompt_selection("cover")
+                    if not choice_check.get("proceed"):
+                        # 返回选择提示，终止生成流程
+                        return {
+                            "need_user_choice": True,
+                            "choice_type": choice_check["choice_info"].get("choice_type"),
+                            "choice_info": choice_check["choice_info"],
+                        }
+                    try:
+                        logger.info(f"开始生成并上传封面图: {title[:30]}...")
+                        kw = outline.get("cover_keywords", []) if isinstance(outline.get("cover_keywords"), list) else []
+                        cover_result = img_gen.generate_and_upload(title, kw, material_skill, "cover")
+                        if cover_result.get("wechat_url"):
+                            cover_wechat_url = cover_result["wechat_url"]
+                            cover_path = cover_result.get("local_path")
+                            image_url_map[cover_path] = cover_wechat_url
+                            logger.info(f"封面上传成功: {cover_wechat_url[:50]}...")
+                    except Exception as e:
+                        logger.warning(f"封面图生成上传失败: {e}")
+            
+            # ========== 2. 处理章节插图 ==========
+            section_wechat_urls = {}  # {section_name: wechat_url}
+            
+            if generate_images and material_skill:
                 img_gen = self._get_image_generator()
                 if img_gen:
-                    try:
-                        logger.info(f"开始生成封面图: {title[:30]}...")
-                        cover_path = img_gen.generate_cover(title, [])
-                        if cover_path:
-                            cover_filename = os.path.basename(cover_path)
-                            logger.info(f"封面图已生成: {cover_filename}")
-                    except Exception as e:
-                        logger.warning(f"生成封面图失败: {e}")
+                    for i, section in enumerate(sections):
+                        section_name = section.get("name", "")
+                        if not section_name:
+                            continue
+                        
+                        # 优先使用预设的图片URL
+                        if section_images and section_name in section_images:
+                            section_wechat_urls[section_name] = section_images[section_name]
+                            logger.info(f"使用预设章节图: {section_name} -> {section_images[section_name][:50]}...")
+                            continue
+                        
+                        # 自动生成并上传
+                        try:
+                            logger.info(f"生成章节{i+1}插图: {section_name}...")
+                            kw = section.get("keywords", []) if isinstance(section.get("keywords"), list) else []
+                            illust_result = img_gen.generate_and_upload(section_name, kw, material_skill, "illustration")
+                            if illust_result.get("wechat_url"):
+                                section_wechat_urls[section_name] = illust_result["wechat_url"]
+                                image_url_map[illust_result.get("local_path", "")] = illust_result["wechat_url"]
+                                logger.info(f"章节{i+1}上传成功: {illust_result['wechat_url'][:50]}...")
+                        except Exception as e:
+                            logger.warning(f"生成章节插图失败: {section_name} - {e}")
             
-            # 如果没有生成封面图，从 cache 中找一个
-            if not cover_filename or not (self._cache_dir / cover_filename).exists():
-                existing_covers = list(self._cache_dir.glob("cover_*.jpg"))
-                if existing_covers:
-                    cover_filename = existing_covers[0].name
-                    logger.info(f"使用已有封面图: {cover_filename}")
-                else:
-                    cover_filename = f"cover_{uuid.uuid4().hex[:8]}.jpg"
+            # ========== 3. 构建文章内容 ==========
+            content_parts = [f"# {title}\n"]
             
-            content_parts.insert(0, f"![封面]({cover_filename})\n\n")
+            # 封面图
+            if cover_wechat_url:
+                content_parts.insert(0, f"![封面]({cover_wechat_url})\n\n")
+            elif cover_path:
+                # 有本地路径但没上传成功，标记一下
+                content_parts.insert(0, f"![封面]({cover_path})\n\n")
             
-            # 2. 生成章节内容（每章插入插图）
+            # 章节内容
             for i, section in enumerate(sections):
                 section_name = section.get("name", "")
                 key_points = section.get("key_points", [])
+                section_content = section.get("content", "")
                 
-                content_parts.append(f"## {section_name}\n")
+                content_parts.append(f"\n## {section_name}\n")
                 
-                # 在每个章节开头插入插图
-                illust_filename = None
-                if generate_images and section_name:
-                    img_gen = self._get_image_generator()
-                    if img_gen:
-                        try:
-                            illust_path = img_gen.generate_illustration(section_name, [])
-                            if illust_path:
-                                illust_filename = os.path.basename(illust_path)
-                                logger.info(f"章节插图已生成: {illust_filename}")
-                        except Exception as e:
-                            logger.warning(f"生成章节插图失败: {e}")
+                # 章节插图 - 优先用微信URL
+                if section_name in section_wechat_urls:
+                    content_parts.append(f"![{section_name}]({section_wechat_urls[section_name]})\n\n")
                 
-                # 如果没有生成插图，从 cache 中找一个
-                if not illust_filename or not (self._cache_dir / illust_filename).exists():
-                    existing_illusts = list(self._cache_dir.glob("illustration_*.jpg"))
-                    if existing_illusts:
-                        # 使用不同的插图（循环使用）
-                        illust_filename = existing_illusts[i % len(existing_illusts)].name
-                        logger.info(f"使用已有插图: {illust_filename}")
-                    else:
-                        illust_filename = f"illustration_{uuid.uuid4().hex[:8]}.jpg"
-                
-                # 章节插图始终插入
-                if section_name:
-                    content_parts.append(f"![{section_name}]({illust_filename})\n\n")
-                
-                for point in key_points:
-                    content_parts.append(f"### {point}\n")
-                    content_parts.append(f"这是关于 {point} 的详细内容...\n\n")
+                # 如果有真实内容，使用它；否则用 key_points 生成
+                if section_content:
+                    content_parts.append(f"{section_content}\n")
+                else:
+                    for point in key_points:
+                        content_parts.append(f"### {point}\n")
+                        content_parts.append(f"这是关于 {point} 的详细内容...\n\n")
             
             markdown_content = "".join(content_parts)
+            
+            # ========== 4. 处理图片URL ==========
+            # 将微信图片URL中的特殊字符（* _）编码，避免被markdown格式转换破坏
+            # 例如: http://mmbiz.qpic.cn/sz*mmbiz*jpg -> http://mmbiz.qpic.cn/sz%2Ambiz%2Ajpg
+            wx_url_map = {}  # 编码后URL -> 原始URL
+            
+            def encode_wx_url(match):
+                alt_text = match.group(1)
+                url = match.group(2)
+                if url.startswith("http"):
+                    # URL编码特殊字符，避免markdown处理破坏
+                    safe_url = url.replace('*', '%2A').replace('_', '%5F')
+                    wx_url_map[safe_url] = url  # 记录原始URL用于后续还原
+                    return f"![{alt_text}]({safe_url})"
+                # 本地路径：如果在 image_url_map 中有微信URL则替换
+                if url in image_url_map:
+                    safe_url = image_url_map[url].replace('*', '%2A').replace('_', '%5F')
+                    wx_url_map[safe_url] = image_url_map[url]
+                    return f"![{alt_text}]({safe_url})"
+                logger.warning(f"图片未上传到微信: {url}")
+                return match.group(0)
+            
+            markdown_content = re.sub(r'!\[([^\]]*)\]\(([^)]+)\)', encode_wx_url, markdown_content)
+            
+            # ========== 5. 转换为 HTML ==========
             html_content = self.convert_to_html(markdown_content, theme)
+            
+            # ========== 6. 还原微信图片URL ==========
+            for safe_url, original_url in wx_url_map.items():
+                html_content = html_content.replace(f'"{safe_url}"', f'"{original_url}"')
             
             return {
                 "topic": topic,
@@ -142,12 +203,123 @@ class ArticleWriterSkill:
                 "outline": outline,
                 "theme": theme,
                 "cover_path": cover_path,
-                "images_generated": generate_images
+                "cover_wechat_url": cover_wechat_url,
+                "section_images": section_wechat_urls,
+                "images_generated": generate_images,
+                "images_uploaded": len([v for v in image_url_map.values() if v.startswith("http")])
             }
         except Exception as e:
             logger.error(f"write_article 错误: {e}")
             raise
     
+    def ensure_images_uploaded(self, content: str, material_skill) -> str:
+        """
+        安全网：确保内容中的所有图片都已上传到微信
+        
+        扫描 markdown 或 HTML 内容中的本地图片路径，
+        自动上传到微信素材库并替换为微信URL。
+        
+        Args:
+            content: markdown 或 HTML 内容
+            material_skill: 素材管理技能实例
+        
+        Returns:
+            替换后的内容，所有图片均使用微信URL
+        """
+        if not content or not material_skill:
+            return content
+        
+        # 匹配本地图片路径（相对于cache目录的路径或绝对路径）
+        import re
+        from pathlib import Path
+        
+        cache_dir = Path.home() / ".cache" / "wechat-mp-auto" / "images"
+        
+        def replace_local_image(match):
+            alt_or_tag = match.group(1) if match.lastindex >= 1 else ""
+            path_or_url = match.group(2) if match.lastindex >= 2 else ""
+            
+            # 如果已经是http URL，跳过
+            if path_or_url.startswith("http"):
+                return match.group(0)
+            
+            # 跳过已经是完整URL的情况（markdown和HTML通用）
+            if path_or_url.startswith("http"):
+                return match.group(0)
+            
+            # 检查是否是本地文件
+            local_path = Path(path_or_url)
+            if not local_path.is_absolute():
+                # 相对路径，尝试相对于cache目录
+                local_path = cache_dir / path_or_url
+            
+            if not local_path.exists():
+                logger.warning(f"本地图片不存在，跳过: {local_path}")
+                return match.group(0)
+            
+            # 上传到微信
+            try:
+                logger.info(f"上传本地图片: {local_path}")
+                result = material_skill.upload_image(str(local_path))
+                wechat_url = result.get("url", "")
+                media_id = result.get("media_id", "")
+                
+                if wechat_url:
+                    logger.info(f"本地上传成功: {wechat_url[:50]}...")
+                    # 替换URL
+                    if match.lastindex and match.group(1):
+                        # markdown格式 ![alt](path)
+                        return f"![{alt_or_tag}]({wechat_url})"
+                    else:
+                        # 其他格式，替换path
+                        return wechat_url
+                else:
+                    logger.warning(f"本地上传失败: {local_path}")
+                    return match.group(0)
+            except Exception as e:
+                logger.error(f"本地上传异常: {e}")
+                return match.group(0)
+        
+        # 匹配 markdown 图片 ![alt](path)
+        content = re.sub(r'!\[([^\]]*)\]\(([^)]+)\)', replace_local_image, content)
+        
+        # 匹配 HTML img 标签 src 属性中的本地路径
+        content = re.sub(r'<img([^>]*)src="([^"]+)"([^>]*)>', 
+                        lambda m: self._replace_html_img_src(m, material_skill), 
+                        content)
+        
+        return content
+    
+    def _replace_html_img_src(self, match, material_skill):
+        """替换HTML中img标签的本地src为微信URL"""
+        before_src = match.group(1)
+        src = match.group(2)
+        after_src = match.group(3)
+        
+        if src.startswith("http"):
+            return match.group(0)
+        
+        from pathlib import Path
+        cache_dir = Path.home() / ".cache" / "wechat-mp-auto" / "images"
+        
+        local_path = Path(src)
+        if not local_path.is_absolute():
+            local_path = cache_dir / src
+        
+        if not local_path.exists():
+            return match.group(0)
+        
+        try:
+            result = material_skill.upload_image(str(local_path))
+            wechat_url = result.get("url", "")
+            if wechat_url:
+                logger.info(f"HTML图片上传成功: {wechat_url[:50]}...")
+                return f'<img{before_src}src="{wechat_url}"{after_src}>'
+        except Exception as e:
+            logger.warning(f"HTML图片上传失败: {e}")
+        
+        return match.group(0)
+
     def count_words(self, content: str) -> int:
         """统计字数"""
         try:
@@ -255,21 +427,29 @@ class ArticleWriterSkill:
     
     def _convert_inline_formatting(self, text: str) -> str:
         """转换行内格式：加粗、斜体、链接、图片"""
-        # 图片 ![alt](url) -> 暂时返回原始格式，后续由 insert_images 处理
+        # 1. 处理 markdown 图片 ![alt](url) -> <img src="url" alt="alt" />
         text = re.sub(r'!\[([^\]]*)\]\(([^)]+)\)', r'<img src="\2" alt="\1" />', text)
         
-        # 链接 [text](url)
+        # 2. 链接 [text](url)
         text = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', r'<a href="\2" style="color:#007AFF;text-decoration:none;">\1</a>', text)
         
-        # 加粗 **text** 或 __text__
+        # 3. 加粗 **text** 或 __text__
         text = re.sub(r'\*\*([^*]+)\*\*', r'<strong>\1</strong>', text)
         text = re.sub(r'__([^_]+)__', r'<strong>\1</strong>', text)
         
-        # 斜体 *text* 或 _text_
-        text = re.sub(r'\*([^*]+)\*', r'<em>\1</em>', text)
-        text = re.sub(r'_([^_]+)_', r'<em>\1</em>', text)
+        # 4. 斜体 *text* 或 _text_
+        # 排除 HTML 属性上下文（如 src="url_with*text*"）
+        # 简单判断：包含 = 的内容说明在 HTML 属性值中，跳过
+        def convert_emphasis(match):
+            inner = match.group(1)
+            if '=' in inner:
+                return match.group(0)
+            return f'<em>{inner}</em>'
         
-        # 行内代码 `code`
+        text = re.sub(r'\*([^*]+)\*', convert_emphasis, text)
+        text = re.sub(r'_([^_]+)_', convert_emphasis, text)
+        
+        # 5. 行内代码 `code`
         text = re.sub(r'`([^`]+)`', r'<code style="background:#f5f5f5;padding:2px 6px;border-radius:4px;font-family:monospace;font-size:13px;">\1</code>', text)
         
         return text
@@ -315,3 +495,103 @@ class ArticleWriterSkill:
         except Exception as e:
             logger.error(f"get_themes 错误: {e}")
             return ["default"]
+
+    def preview_theme(self, theme_name: str = None) -> str:
+        """
+        生成模板预览 HTML。
+
+        Args:
+            theme_name: 指定模板名，为 None 时返回所有模板合并预览。
+
+        Returns:
+            HTML 字符串，可用 canvas.present(url="data:text/html,...") 渲染。
+        """
+        import yaml
+
+        # 模板配色和底色配置
+        theme_styles = {
+            "default": {
+                "name_cn": "默认",
+                "name_en": "default",
+                "primary": "#007AFF",
+                "bg": "#f0f4ff",
+                "label_bg": "#007AFF",
+            },
+            "henge": {
+                "name_cn": "横戈",
+                "name_en": "henge",
+                "primary": "#333333",
+                "bg": "#f0f0f0",
+                "label_bg": "#333333",
+            },
+            "shuimo": {
+                "name_cn": "水墨",
+                "name_en": "shuimo",
+                "primary": "#2c3e50",
+                "bg": "#f5f5f0",
+                "label_bg": "#2c3e50",
+            },
+            "wenyan": {
+                "name_cn": "古文",
+                "name_en": "wenyan",
+                "primary": "#8b4513",
+                "bg": "#fff8f0",
+                "label_bg": "#8b4513",
+            },
+            "macaron": {
+                "name_cn": "马卡龙",
+                "name_en": "macaron",
+                "primary": "#e91e8c",
+                "bg": "#fef0f5",
+                "label_bg": "#e91e8c",
+            },
+        }
+
+        # 确定要预览哪些模板
+        if theme_name:
+            targets = {theme_name: theme_styles.get(theme_name, theme_styles["default"])}
+        else:
+            targets = theme_styles
+
+        blocks = []
+        for tid, style in targets.items():
+            theme_file = self._themes_dir / f"{tid}.yaml"
+            if theme_file.exists():
+                with open(theme_file) as f:
+                    cfg = yaml.safe_load(f) or {}
+                primary = cfg.get("colors", {}).get("primary", style["primary"])
+                bg = style["bg"]
+            else:
+                primary = style["primary"]
+                bg = style["bg"]
+
+            block = f'''
+  <div style="background:{bg}; padding:24px; margin-bottom:20px; border-radius:4px;">
+    <div style="display:inline-block; background:{style["label_bg"]}; color:#fff; padding:5px 12px; font-size:12px; border-radius:3px; margin-bottom:10px;">
+      {style["name_cn"]} {style["name_en"]}
+    </div>
+    <h1 style="font-size:20px; color:{primary}; margin:8px 0;">示例标题</h1>
+    <p style="color:#333; line-height:1.8; margin:8px 0;">正文示例文字，演示模板效果...</p>
+    <blockquote style="border-left:3px solid {primary}; padding-left:10px; color:#666; margin:8px 0;">引用块效果</blockquote>
+    <p style="margin:8px 0;"><strong>加粗</strong> · <em>斜体</em></p>
+  </div>'''
+            blocks.append(block)
+
+        html = f'''<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+body {{ margin:0; padding:24px; background:#fff; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }}
+</style>
+</head>
+<body>
+<div style="max-width:900px; margin:0 auto;">
+  <h2 style="text-align:center; padding:16px 0; margin-bottom:24px; font-size:18px; color:#333;">
+    微信公众号模板预览
+  </h2>
+  {"".join(blocks)}
+</div>
+</body>
+</html>'''
+        return html

@@ -9,9 +9,9 @@
 
 - 选题调研 - 联网搜索可信源
 - 文章写作 - Markdown 转微信 HTML（**自动插入封面和章节插图**）
-- 智能配图 - Pexels/Unsplash 无版权图片
+- 智能配图 - AI 生图 + Pexels/Unsplash 图库（首次引导选择图片来源）
 - **内容审核** - 本地+网络重复度检测、敏感词扫描、**三阶段完整性检查**
-- 本地主题 - 5种主题切换
+- 本地主题 - 5种主题切换（**支持预览**）
 - 数据分析 - 阅读量、点赞数统计
 
 ---
@@ -55,6 +55,10 @@ pip install -r requirements.txt
 
 ### 2. 配置图片 API（可选）
 
+**图片来源有两种方式，首次使用时系统会引导选择：**
+
+#### 方式一：图片接口检索（推荐）
+
 **Pexels**（推荐）
 - 官网：https://www.pexels.com/api/
 - 免费额度：每月 200 请求
@@ -65,17 +69,41 @@ pip install -r requirements.txt
 - 免费额度：每月 50 请求
 - 获取 Key：Create New Application → Access Key
 
-**OpenAI DALL-E**（AI 生成图片）
-- 官网：https://platform.openai.com/
-- 获取 Key：API Keys
-
-配置方式：
 ```bash
 # 写入 ~/.openclaw/.env
 PEXELS_API_KEY=你的Key
 UNSPLASH_API_KEY=你的Key
-OPENAI_API_KEY=你的Key
 ```
+
+#### 方式二：AI 生图
+
+**支持的生图模型 Provider：**
+
+| 分类 | Provider | 模型 | 说明 |
+|------|----------|------|------|
+| 国内 | ali-bailian | wanx2.1 | 阿里云通义万图 |
+| 国内 | minimax-cn | image-01 | MiniMax 生图 |
+| 国内 | baidu | ernie-vilg-v2 | 百度文心一格 |
+| 国内 | tencent | hunyuan-image | 腾讯混元 |
+| 国内 | zhipu | cogview-4 | 智谱 CogView |
+| 国内 | sensetime | nova-smooth | 商汤 |
+| 国内 | bytedance | sdxl-txt2img | 字节豆包 |
+| 国外 | openai | dall-e-3 | OpenAI DALL-E 3 |
+| 国外 | google | imagen-3 | Google Imagen 3 |
+| 国外 | stability-ai | stable-diffusion-xl | Stability AI |
+| 国外 | replicate | flux-schnell | Replicate Flux |
+| 国外 | aws-bedrock | stability.stable-diffusion-xl-v1 | AWS Bedrock |
+| 国外 | azure-openai | dall-e-3 | Azure DALL-E 3 |
+
+**配置方式：**
+在 OpenClaw 配置文件 `~/.openclaw/openclaw.json` 中配置相应的模型和 API Key。
+
+**探测机制：**
+- **初筛**：读取 OpenClaw 配置时，自动过滤 `input` 包含 `image` 或 `api` 类型包含 `image` 的模型
+- **实测探测**：对初筛通过的模型，实际调用其图像生成 API，验证是否真正具备生图能力
+- **缓存**：探测结果缓存 24 小时，避免重复探测
+
+---
 
 ### 3. 配置网络重复度检测（可选）
 
@@ -117,6 +145,50 @@ export TAVILY_API_KEY=你的Key
 
 ---
 
+## 图片来源选择
+
+首次调用 `write_article(generate_images=True)` 或图片生成方法时，系统会引导选择图片来源方式。
+
+### 选择流程
+
+1. **图片来源选择**
+   - `AI生图`：调用 AI 模型生成图片（需选择模型）
+   - `图片接口检索`：从 Pexels/Unsplash 图库搜索（需配置 API key）
+
+2. **模型选择**（选择 AI 生图时）
+   系统从 OpenClaw 配置中动态读取生图模型列表，并通过实测探测验证模型是否真正具备生图能力。
+   如果未配置任何生图模型，系统会提示配置或改用图片检索方式。
+
+### 偏好持久化
+
+选择结果写入 `~/.config/wechat-mp-auto/config.json`，后续调用不再提示。
+如需更改，删除配置文件中 `image_source` 和 `ai_model` 字段后重新触发。
+
+### 环境变量
+
+| 变量名 | 说明 |
+|--------|------|
+| `PEXELS_API_KEY` | Pexels 免费图库 API Key |
+| `UNSPLASH_API_KEY` | Unsplash 免费图库 API Key |
+
+---
+
+## 模板预览
+
+查看所有 5 个模板的视觉效果：
+
+```python
+from skills.article_writer import ArticleWriterSkill
+writer = ArticleWriterSkill()
+html = writer.preview_theme()
+# 用 canvas 渲染：
+# canvas.present(url="data:text/html;charset=utf-8," + html)
+```
+
+返回包含全部 5 个模板（default、shuimo、wenyan、macaron、henge）的合并预览图，不同模板用不同底色区分，可直观对比各主题配色效果。
+
+---
+
 ## 三阶段完整性检查
 
 | 检查点 | 时机 | 检查内容 |
@@ -153,7 +225,7 @@ wechat-mp-auto/
 │       ├── base_skill.py      # 基础类
 │       ├── topic_research.py # 选题调研
 │       ├── article_writer.py # 文章写作（含 Markdown 转 HTML、自动插图）
-│       ├── image_generator.py # 配图生成（Pexels/Unsplash/DALL-E）
+│       ├── image_generator.py # 配图生成（Pexels/Unsplash）
 │       ├── image_processor.py # 图片处理
 │       ├── content_reviewer.py # 内容审核（重复度、敏感词、网络检测）
 │       ├── template_design.py # 模板设计
@@ -200,7 +272,7 @@ wechat-mp-auto/
 ## 注意事项
 
 1. 微信"文章模板"无开放 API，无法下载/上传
-2. 图片优先使用 Pexels，无效则切换 Unsplash，最后尝试 DALL-E
+2. 图片优先使用 Pexels，无效则切换 Unsplash
 3. Markdown 转 HTML 内置在 article_writer 中
 4. 网络重复度检测需要配置 TAVILY_API_KEY
 5. 文章生成时会自动查找 cache 目录中的已有图片

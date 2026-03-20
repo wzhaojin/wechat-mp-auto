@@ -64,8 +64,14 @@ class DraftSkill(BaseSkill):
             logger.error(f"获取草稿详情失败: {str(e)}", exc_info=True)
             raise
 
-    def create_draft(self, articles: List[Dict]) -> Dict:
-        """创建草稿"""
+    def create_draft(self, articles: List[Dict], auto_upload_thumb: bool = False) -> Dict:
+        """创建草稿
+        
+        Args:
+            articles: 文章列表，每篇文章需包含 title, content 等字段
+            auto_upload_thumb: 是否自动上传封面图。如果为True，会自动将文章HTML中
+                             的第一张图片作为封面上传
+        """
         # 参数验证
         if not articles or not isinstance(articles, list):
             logger.error("无效的articles参数: articles不能为空且必须是列表")
@@ -75,7 +81,7 @@ class DraftSkill(BaseSkill):
             logger.warning(f"文章数量过多({len(articles)}),微信限制最多8篇")
             articles = articles[:8]
 
-        # 验证每篇文章的结构
+        # 验证每篇文章的结构，并自动处理封面图
         for i, article in enumerate(articles):
             if not isinstance(article, dict):
                 logger.error(f"无效的文章结构: 第{i+1}篇不是字典")
@@ -84,6 +90,44 @@ class DraftSkill(BaseSkill):
             # 至少需要title字段
             if "title" not in article or not article.get("title"):
                 logger.warning(f"第{i+1}篇文章缺少标题")
+            
+            # 检查 thumb_media_id
+            thumb_id = article.get("thumb_media_id", "")
+            if not thumb_id and auto_upload_thumb:
+                # 自动从HTML内容中提取第一张图片并上传作为封面
+                content = article.get("content", "")
+                if content:
+                    import re
+                    img_matches = re.findall(r'<img[^>]*src="([^"]+)"', content)
+                    if img_matches:
+                        first_img_url = img_matches[0]
+                        logger.info(f"[{i+1}] 自动提取封面图: {first_img_url[:50]}...")
+                        
+                        # 下载并上传
+                        try:
+                            from .material_skill import MaterialSkill
+                            mat = MaterialSkill()
+                            
+                            import requests
+                            import uuid
+                            from pathlib import Path
+                            cache = Path.home() / ".cache" / "wechat-mp-auto" / "images"
+                            cache.mkdir(parents=True, exist_ok=True)
+                            
+                            if first_img_url.startswith("http"):
+                                resp = requests.get(first_img_url, timeout=30)
+                                if resp.status_code == 200:
+                                    local_file = cache / f"thumb_{uuid.uuid4().hex[:8]}.jpg"
+                                    with open(local_file, "wb") as f:
+                                        f.write(resp.content)
+                                    
+                                    upload_result = mat.upload_image(str(local_file))
+                                    new_thumb_id = upload_result.get("media_id", "")
+                                    if new_thumb_id:
+                                        article["thumb_media_id"] = new_thumb_id
+                                        logger.info(f"[{i+1}] 封面上传成功: {new_thumb_id[:20]}...")
+                        except Exception as e:
+                            logger.warning(f"[{i+1}] 自动封面上传失败: {e}")
 
         try:
             logger.info(f"创建草稿: articles_count={len(articles)}")

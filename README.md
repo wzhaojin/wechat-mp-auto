@@ -10,7 +10,7 @@
 
 - **选题调研** - 联网搜索可信源，自动生成文章大纲
 - **文章写作** - Markdown 转微信 HTML，支持多种格式，**自动插入封面和章节插图**
-- **智能配图** - Pexels/Unsplash 无版权图片 + OpenAI DALL-E AI 生成
+- **智能配图** - Pexels/Unsplash 图库 + AI 生图模型（可选择）
 - **图片处理** - 自动去水印、调整微信尺寸、压缩
 - **内容审核** - 本地+网络重复度检测、敏感词扫描、**三阶段完整性检查**
 - **模板管理** - 本地 ↔ 微信公众平台双向同步
@@ -45,20 +45,16 @@ export WECHAT_APP_SECRET="your_app_secret"
 
 ### 3. 可选：配置图片生成 API
 
-**Pexels（推荐，无需信用卡）：**
+首次使用时系统会引导选择图片来源方式，支持以下两种：
+
+**图片接口检索（推荐，无需信用卡）：**
 ```bash
 export PEXELS_API_KEY="your_pexels_key"
-```
-
-**Unsplash：**
-```bash
 export UNSPLASH_API_KEY="your_unsplash_key"
 ```
+注册地址：Pexels https://www.pexels.com/api/ | Unsplash https://unsplash.com/developers
 
-**OpenAI DALL-E（AI 生成）：**
-```bash
-export OPENAI_API_KEY="sk-..."
-```
+
 
 ### 4. 可选：配置网络重复度检测
 

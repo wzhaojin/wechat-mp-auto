@@ -6,7 +6,7 @@ import os
 import json
 import logging
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Dict
 
 # 配置日志
 logger = logging.getLogger(__name__)
@@ -153,6 +153,76 @@ class Config:
         except Exception as e:
             logger.error(f"设置默认模板失败: {str(e)}")
             raise
+
+    # ========== 图片来源和模型偏好 ==========
+
+    def get_image_preferences(self) -> Dict:
+        """获取图片来源和模型偏好配置"""
+        config_file = self.DEFAULT_CONFIG_DIR / "config.json"
+        defaults = {
+            "image_source": None,   # "ai" 或 "search"
+            "ai_model": None,        # 模型 ID 如 "glm-5", "dall-e-3", "kimi" 等
+        }
+        
+        if config_file.exists():
+            try:
+                with open(config_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    defaults["image_source"] = data.get("image_source")
+                    defaults["ai_model"] = data.get("ai_model")
+            except Exception as e:
+                logger.warning(f"读取图片偏好失败: {str(e)}")
+        
+        return defaults
+
+    def set_image_source_preference(self, source: str):
+        """设置图片来源偏好"""
+        if source not in ("ai", "search"):
+            raise ValueError("图片来源只支持 'ai' 或 'search'")
+        
+        config_file = self.DEFAULT_CONFIG_DIR / "config.json"
+        config = {}
+        
+        if config_file.exists():
+            try:
+                with open(config_file, 'r', encoding='utf-8') as f:
+                    config = json.load(f)
+            except Exception:
+                pass
+        
+        config["image_source"] = source
+        
+        # 更换图片来源时，清空模型偏好（需重新选择）
+        if source == "search":
+            config.pop("ai_model", None)
+        
+        with open(config_file, 'w', encoding='utf-8') as f:
+            json.dump(config, f, indent=2)
+        
+        logger.info(f"图片来源偏好已保存: {source}")
+
+    def set_ai_model_preference(self, model_id: str):
+        """设置AI生图模型偏好"""
+        if not model_id:
+            raise ValueError("模型ID不能为空")
+        
+        config_file = self.DEFAULT_CONFIG_DIR / "config.json"
+        config = {}
+        
+        if config_file.exists():
+            try:
+                with open(config_file, 'r', encoding='utf-8') as f:
+                    config = json.load(f)
+            except Exception:
+                pass
+        
+        config["image_source"] = "ai"
+        config["ai_model"] = model_id
+        
+        with open(config_file, 'w', encoding='utf-8') as f:
+            json.dump(config, f, indent=2)
+        
+        logger.info(f"AI模型偏好已保存: {model_id}")
 
 
 # 全局配置实例
