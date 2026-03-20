@@ -90,7 +90,7 @@ UNSPLASH_API_KEY=你的Key
 | 国内 | bytedance | sdxl-txt2img | 字节豆包 |
 | 国外 | openai | dall-e-3 | OpenAI DALL-E 3 |
 | 国外 | google | imagen-3 | Google Imagen 3 |
-| 国外 | stability-ai | stable-diffusion-xl | Stability AI |
+| 国外 | stability-ai | stable-diffusion-xl（SDXL） | Stability AI |
 | 国外 | replicate | flux-schnell | Replicate Flux |
 | 国外 | aws-bedrock | stability.stable-diffusion-xl-v1 | AWS Bedrock |
 | 国外 | azure-openai | dall-e-3 | Azure DALL-E 3 |

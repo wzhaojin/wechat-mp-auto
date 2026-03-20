@@ -143,7 +143,7 @@ class ImageProcessorSkill(BaseSkill):
                             return "bottom_right"
             
             return None
-        except:
+        except Exception:
             return None
     
     def _crop_corner_watermark(self, img, position: str):

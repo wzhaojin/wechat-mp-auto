@@ -254,7 +254,7 @@ def check_article_integrity(markdown: str = None, html: str = None,
         try:
             draft_content.encode('utf-8')
             stats["encoding_ok"] = True
-        except:
+        except UnicodeEncodeError:
             issues.append("草稿内容编码异常")
         
         # 检查乱码
