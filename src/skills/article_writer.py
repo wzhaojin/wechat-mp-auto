@@ -106,6 +106,13 @@ class ArticleWriterSkill:
             # ========== 2. 处理章节插图 ==========
             section_wechat_urls = {}  # {section_name: wechat_url}
             
+            # 优先使用预设的章节图片URL（在 generate_images 条件之外）
+            if section_images:
+                for section_name, section_url in section_images.items():
+                    section_wechat_urls[section_name] = section_url
+                    logger.info(f"使用预设章节图: {section_name}")
+            
+            # 只有需要自动生成时才进入图片生成逻辑
             if generate_images and material_skill:
                 img_gen = self._get_image_generator()
                 if img_gen:
@@ -114,10 +121,8 @@ class ArticleWriterSkill:
                         if not section_name:
                             continue
                         
-                        # 优先使用预设的图片URL
-                        if section_images and section_name in section_images:
-                            section_wechat_urls[section_name] = section_images[section_name]
-                            logger.info(f"使用预设章节图: {section_name} -> {section_images[section_name][:50]}...")
+                        # 跳过已有预设图片的章节（已在上面处理）
+                        if section_name in section_wechat_urls:
                             continue
                         
                         # 自动生成并上传
@@ -133,36 +138,75 @@ class ArticleWriterSkill:
                             logger.warning(f"生成章节插图失败: {section_name} - {e}")
             
             # ========== 3. 构建文章内容 ==========
-            content_parts = [f"# {title}\n"]
-            
-            # 封面图
-            if cover_wechat_url:
-                content_parts.insert(0, f"![封面]({cover_wechat_url})\n\n")
-            elif cover_path:
-                # 有本地路径但没上传成功，标记一下
-                content_parts.insert(0, f"![封面]({cover_path})\n\n")
-            
-            # 章节内容
-            for i, section in enumerate(sections):
-                section_name = section.get("name", "")
-                key_points = section.get("key_points", [])
-                section_content = section.get("content", "")
+            # 如果传入了 content（AI生成的完整内容），优先使用
+            if content and isinstance(content, str) and content.strip():
+                logger.info(f"使用预设内容，字数: {len(content)}")
+                markdown_content = content.strip()
                 
-                content_parts.append(f"\n## {section_name}\n")
+                # 插入封面图（插到标题之后）
+                if cover_wechat_url:
+                    # 尝试找到第一个标题，把封面图插到它后面
+                    title_match = re.search(r'^(#{1,6}\s+.+?\n)', markdown_content, re.MULTILINE)
+                    if title_match:
+                        pos = title_match.end()
+                        markdown_content = markdown_content[:pos] + f"\n![封面]({cover_wechat_url})\n" + markdown_content[pos:]
+                    else:
+                        markdown_content = f"![封面]({cover_wechat_url})\n\n" + markdown_content
                 
-                # 章节插图 - 优先用微信URL
-                if section_name in section_wechat_urls:
-                    content_parts.append(f"![{section_name}]({section_wechat_urls[section_name]})\n\n")
+                # 插入章节图（在对应的 ## 标题后面）
+                # 先清理可能存在的无效占位图（如本地路径、无效URL），避免重复
+                for section_name, section_url in section_wechat_urls.items():
+                    # 清理同一章节下可能残留的无效图片引用（本地路径或无效URL，非微信URL）
+                    # 匹配该章节标题后紧跟的一行图片引用（仅清理非微信URL的图片）
+                    cleanup_pattern = r'^(\#{2,3}\s+' + re.escape(section_name) + r'[^\n]*\n)\s*!\[([^\]]*)\]\((?!http)[^\)]+\)\n'
+                    markdown_content = re.sub(cleanup_pattern, r'\1', markdown_content, flags=re.MULTILINE)
+
+                    # 匹配 ## 章节名 或 ### 小节名，在标题行正后方插入图片（独占一行）
+                    # 注意：rf-string 中 {2,3} 需要双花括号转义，否则被当成格式占位符
+                    title_pattern = r'^(\#{2,3}\s+' + re.escape(section_name) + r'[^\n]*\n)'
+                    # 如果标题行后方已有一行有效的微信图片，则跳过（避免重复）
+                    already_injected = re.search(
+                        r'^(\#{2,3}\s+' + re.escape(section_name) + r'[^\n]*\n)\s*!\[([^\]]*)\]\(http[^\)]+\)\n',
+                        markdown_content, flags=re.MULTILINE
+                    )
+                    if already_injected:
+                        logger.info(f"章节[{section_name}]已有有效图片，跳过注入")
+                        continue
+                    # 否则注入图片（独占一行）
+                    injection = r'\1' + f'![{section_name}]({section_url})\n'
+                    markdown_content = re.sub(title_pattern, injection, markdown_content, flags=re.MULTILINE)
+            else:
+                # 没有预设内容，从大纲构建
+                content_parts = [f"# {title}\n"]
                 
-                # 如果有真实内容，使用它；否则用 key_points 生成
-                if section_content:
-                    content_parts.append(f"{section_content}\n")
-                else:
-                    for point in key_points:
-                        content_parts.append(f"### {point}\n")
-                        content_parts.append(f"这是关于 {point} 的详细内容...\n\n")
-            
-            markdown_content = "".join(content_parts)
+                # 封面图
+                if cover_wechat_url:
+                    content_parts.insert(0, f"![封面]({cover_wechat_url})\n\n")
+                elif cover_path:
+                    # 有本地路径但没上传成功，标记一下
+                    content_parts.insert(0, f"![封面]({cover_path})\n\n")
+                
+                # 章节内容
+                for i, section in enumerate(sections):
+                    section_name = section.get("name", "")
+                    key_points = section.get("key_points", [])
+                    section_content = section.get("content", "")
+                    
+                    content_parts.append(f"\n## {section_name}\n")
+                    
+                    # 章节插图 - 优先用微信URL
+                    if section_name in section_wechat_urls:
+                        content_parts.append(f"![{section_name}]({section_wechat_urls[section_name]})\n\n")
+                    
+                    # 如果有真实内容，使用它；否则用 key_points 生成
+                    if section_content:
+                        content_parts.append(f"{section_content}\n")
+                    else:
+                        for point in key_points:
+                            content_parts.append(f"### {point}\n")
+                            content_parts.append(f"这是关于 {point} 的详细内容...\n\n")
+                
+                markdown_content = "".join(content_parts)
             
             # ========== 4. 处理图片URL ==========
             # 将微信图片URL中的特殊字符（* _）编码，避免被markdown格式转换破坏
@@ -330,6 +374,75 @@ class ArticleWriterSkill:
             logger.error(f"count_words 错误: {e}")
             return 0
     
+    def _is_table_row(self, line: str) -> bool:
+        """判断是否是大纲中的表格行"""
+        line = line.strip()
+        if not line.startswith('|') or not line.endswith('|'):
+            return False
+        # 至少有两列
+        parts = [p.strip() for p in line.split('|')]
+        parts = [p for p in parts if p]  # 去掉空字符串
+        return len(parts) >= 2
+
+    def _convert_table_block(self, lines: List[str], start_idx: int, primary: str) -> tuple:
+        """转换表格块，返回 (html_lines, end_idx)"""
+        table_lines = []
+        i = start_idx
+        while i < len(lines):
+            line = lines[i].strip()
+            if not line:
+                break
+            # 检查是否是表格行（|开头和结尾）
+            if not (line.startswith('|') and line.endswith('|')):
+                break
+            table_lines.append(line)
+            i += 1
+        
+        if len(table_lines) < 2:
+            return None, start_idx
+        
+        # 解析表格
+        def parse_row(row: str) -> List[str]:
+            parts = [p.strip() for p in row.split('|')]
+            return [p for p in parts if p]  # 过滤空字符串
+        
+        rows = [parse_row(line) for line in table_lines]
+        
+        # 检查是否有分隔行（第二行是 --- 等）
+        has_header_separator = False
+        if len(rows) >= 2:
+            second_row = rows[1]
+            if all(re.match(r'^[-:]+$', cell) for cell in second_row):
+                has_header_separator = True
+        
+        # 构建HTML表格
+        table_html = ['<table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;">']
+        
+        # 表头
+        header_cells = rows[0]
+        table_html.append('  <thead><tr>')
+        for cell in header_cells:
+            cell_content = self._convert_inline_formatting(cell)
+            cell_content = self._escape_user_html(cell_content)
+            table_html.append(f'    <th style="border:1px solid #ddd;padding:8px 12px;background:#f5f5f5;font-weight:bold;text-align:left;">{cell_content}</th>')
+        table_html.append('  </tr></thead>')
+        
+        # 表体
+        body_start = 2 if has_header_separator else 1
+        if body_start < len(rows):
+            table_html.append('  <tbody>')
+            for row in rows[body_start:]:
+                table_html.append('    <tr>')
+                for cell in row:
+                    cell_content = self._convert_inline_formatting(cell)
+                    cell_content = self._escape_user_html(cell_content)
+                    table_html.append(f'      <td style="border:1px solid #ddd;padding:8px 12px;">{cell_content}</td>')
+                table_html.append('    </tr>')
+            table_html.append('  </tbody>')
+        
+        table_html.append('</table>')
+        return table_html, i
+
     def convert_to_html(self, markdown: str, theme: str = "default") -> str:
         """Markdown 转微信 HTML"""
         try:
@@ -384,6 +497,14 @@ class ArticleWriterSkill:
                     i += 1
                     continue
                 
+                # 表格块（检测连续的多行表格）
+                if self._is_table_row(line):
+                    table_html, next_i = self._convert_table_block(lines, i, primary)
+                    if table_html:
+                        html.extend(table_html)
+                        i = next_i
+                        continue
+                
                 # 标题
                 if line.startswith('# '):
                     html.append(f'<h1 style="font-size: 24px; font-weight: bold; text-align: center; color: {primary}; margin: 20px 0;">{line[2:]}</h1>')
@@ -391,6 +512,12 @@ class ArticleWriterSkill:
                     html.append(f'<h2 style="font-size: 20px; font-weight: bold; margin: 16px 0;">{line[3:]}</h2>')
                 elif line.startswith('### '):
                     html.append(f'<h3 style="font-size: 16px; font-weight: bold; margin: 12px 0;">{line[4:]}</h3>')
+                elif line.startswith('#### '):
+                    html.append(f'<h4 style="font-size: 15px; font-weight: bold; margin: 12px 0;">{line[5:]}</h4>')
+                elif line.startswith('##### '):
+                    html.append(f'<h5 style="font-size: 14px; font-weight: bold; margin: 12px 0;">{line[6:]}</h5>')
+                elif line.startswith('###### '):
+                    html.append(f'<h6 style="font-size: 13px; font-weight: bold; margin: 12px 0;">{line[7:]}</h6>')
                 # 无序列表
                 elif line.startswith('- ') or line.startswith('* '):
                     content = line[2:]
@@ -427,6 +554,17 @@ class ArticleWriterSkill:
     
     def _convert_inline_formatting(self, text: str) -> str:
         """转换行内格式：加粗、斜体、链接、图片"""
+        # 0. 保护 HTML 属性中的 URL 和属性值（先于所有转换）
+        #    使用占位符保护 src/href 属性值中的 URL，避免下划线等被错误转换
+        protected = []
+        def protect_url(match):
+            idx = len(protected)
+            protected.append(match.group(0))
+            return f"__PROTECTED_URL_{idx}__"
+        
+        # 保护 src= 和 href= 属性值（URL）
+        text = re.sub(r'(src|href)="([^"]+)"', protect_url, text)
+        
         # 1. 处理 markdown 图片 ![alt](url) -> <img src="url" alt="alt" />
         text = re.sub(r'!\[([^\]]*)\]\(([^)]+)\)', r'<img src="\2" alt="\1" />', text)
         
@@ -438,19 +576,17 @@ class ArticleWriterSkill:
         text = re.sub(r'__([^_]+)__', r'<strong>\1</strong>', text)
         
         # 4. 斜体 *text* 或 _text_
-        # 排除 HTML 属性上下文（如 src="url_with*text*"）
-        # 简单判断：包含 = 的内容说明在 HTML 属性值中，跳过
-        def convert_emphasis(match):
-            inner = match.group(1)
-            if '=' in inner:
-                return match.group(0)
-            return f'<em>{inner}</em>'
-        
-        text = re.sub(r'\*([^*]+)\*', convert_emphasis, text)
-        text = re.sub(r'_([^_]+)_', convert_emphasis, text)
+        # 仅匹配独立的斜体标记，不匹配 URL 中的下划线
+        # 使用负向预见断言：确保下划线两侧不是 URL 字符（字母数字和常见URL字符）
+        text = re.sub(r'(?<![a-zA-Z0-9/:.?=&%-])_([^_]+)_(?![a-zA-Z0-9/:.?=&%-])', r'<em>\1</em>', text)
+        text = re.sub(r'(?<![a-zA-Z0-9])_([^_]+)_(?![a-zA-Z0-9])', r'<em>\1</em>', text)  # 更严格的匹配
         
         # 5. 行内代码 `code`
         text = re.sub(r'`([^`]+)`', r'<code style="background:#f5f5f5;padding:2px 6px;border-radius:4px;font-family:monospace;font-size:13px;">\1</code>', text)
+        
+        # 6. 恢复被保护的 URL
+        for idx, url in enumerate(protected):
+            text = text.replace(f"__PROTECTED_URL_{idx}__", url)
         
         return text
     
