@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.9] - 2026-03-21
+
+版本号递增，因已有相同版本号发布记录
+
 ## [0.0.8] - 2026-03-21
 
 ### Added

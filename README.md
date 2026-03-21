@@ -4,7 +4,7 @@
 
 [![Python Version](https://img.shields.io/badge/python-3.9+-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE.txt)
-[![Version](https://img.shields.io/badge/version-v0.0.8-blue)](SKILL.md)
+[![Version](https://img.shields.io/badge/version-v0.0.9-blue)](SKILL.md)
 
 ## 功能特性
 
