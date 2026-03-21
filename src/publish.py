@@ -362,18 +362,34 @@ def insert_images_to_content(html: str, material_skill, dry_run: bool = False) -
 
 
 @timer
-def find_cover_image(theme: str) -> Optional[str]:
+def find_cover_image(theme: str, title: str = "") -> Optional[str]:
     """自动查找或生成封面图"""
     cache_dir = Path.home() / ".cache" / "wechat-mp-auto" / "images"
 
+    # 如果有标题，尝试从图库搜横向封面
+    if title:
+        try:
+            sys.path.insert(0, str(Path(__file__).parent))
+            from skills.image_generator import ImageGeneratorSkill
+            img_gen = ImageGeneratorSkill()
+            # 优先用标题搜横向封面
+            images = img_gen._search_all(title, count=5)
+            for img_info in images:
+                path = img_gen._download_image(img_info, "cover",
+                                              max_width=900, max_height=500)
+                if path:
+                    logging.info(f"图库封面搜索成功: {path}")
+                    return path
+        except Exception as e:
+            logging.warning(f"图库封面搜索失败: {e}")
+
+    # fallback：从缓存选大文件（>500KB），跳过缩略图
     if cache_dir.exists():
-        # 优先选大文件（>500KB），跳过缩略图
         covers = [p for p in cache_dir.glob("cover_*.jpg")
                   if "_thumb" not in p.name and p.stat().st_size > 500000]
         if covers:
             latest = max(covers, key=lambda p: p.stat().st_mtime)
             return str(latest)
-        # fallback：选最新的大图（不区分thumb，找最大的）
         all_covers = [p for p in cache_dir.glob("cover_*.jpg")
                       if p.stat().st_size > 500000]
         if all_covers:
@@ -513,7 +529,7 @@ def publish_article(args, components) -> bool:
         logging.info("✓ 转换检查通过")
 
     # 4. 处理封面图
-    cover_path = args.cover or find_cover_image(args.theme)
+    cover_path = args.cover or find_cover_image(args.theme, args.title)
     if not cover_path:
         logging.info("未找到封面图，尝试自动生成...")
         cover_path = generate_cover_image(args.title, components['img_generator'])

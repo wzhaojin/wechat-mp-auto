@@ -536,7 +536,7 @@ class ImageGeneratorSkill(BaseSkill):
             elif self._image_source == "search":
                 images = self._search_all(cover_keywords)
                 if images:
-                    img_path = self._download_image(images[0], "cover")
+                    img_path = self._download_image(images[0], "cover", max_width=900, max_height=500)
                     if img_path:
                         logger.info(f"图库下载封面图成功: {img_path}")
                         return img_path
@@ -567,7 +567,7 @@ class ImageGeneratorSkill(BaseSkill):
             elif self._image_source == "search":
                 images = self._search_all(illust_keywords)
                 if images:
-                    img_path = self._download_image(images[0], "illustration")
+                    img_path = self._download_image(images[0], "illustration", max_width=900, max_height=400)
                     if img_path:
                         logger.info(f"图库下载插图成功: {img_path}")
                         return img_path
@@ -1165,7 +1165,29 @@ class ImageGeneratorSkill(BaseSkill):
         else:
             return f"{prompt}，{style_guide}，方形图片 1:1 比例，插画风格"
 
-    def _download_from_url(self, url: str, prefix: str = "ai") -> Optional[str]:
+    def _compress_image(self, filepath: str, max_width: int = 900, max_height: int = 900, quality: int = 85) -> bool:
+        """使用 Pillow 压缩并缩放图片，返回是否成功"""
+        try:
+            from PIL import Image
+            with Image.open(filepath) as img:
+                # 转换模式（RGBA/P/LA/PA → RGB，避免 JPEG 不支持）
+                if img.mode in ("RGBA", "P", "LA", "PA"):
+                    rgb_img = img.convert("RGB")
+                else:
+                    rgb_img = img
+                # 缩放，保证不超过 max_width × max_height
+                rgb_img.thumbnail((max_width, max_height), Image.LANCZOS)
+                rgb_img.save(filepath, "JPEG", quality=quality, optimize=True)
+            return True
+        except ImportError:
+            logger.warning("Pillow 未安装，图片未压缩")
+            return False
+        except Exception as e:
+            logger.warning(f"图片压缩失败，使用原图: {e}")
+            return False
+
+    def _download_from_url(self, url: str, prefix: str = "ai",
+                          max_width: int = 900, max_height: int = 900) -> Optional[str]:
         """从 URL 下载图片"""
         try:
             import requests
@@ -1176,6 +1198,8 @@ class ImageGeneratorSkill(BaseSkill):
                 with open(filepath, "wb") as f:
                     f.write(resp.content)
                 logger.info(f"AI 图片下载成功: {filepath}")
+                # 压缩图片
+                self._compress_image(str(filepath), max_width=max_width, max_height=max_height)
                 return str(filepath)
             else:
                 logger.warning(f"AI 图片下载失败 HTTP {resp.status_code}")
@@ -1212,7 +1236,7 @@ class ImageGeneratorSkill(BaseSkill):
             return []
         try:
             import requests
-            url = f"https://api.pexels.com/v1/search?query={keywords}&per_page={count}"
+            url = f"https://api.pexels.com/v1/search?query={keywords}&per_page={count}&orientation=landscape"
             headers = {"Authorization": self._pexels_api_key}
             resp = requests.get(url, headers=headers, timeout=10)
             if resp.status_code != 200:
@@ -1221,7 +1245,8 @@ class ImageGeneratorSkill(BaseSkill):
             photos = data.get("photos", [])
             return [
                 {
-                    "url": p.get("src", {}).get("original"),
+                    # "large" 约 1050px，"medium" 约 350px，用 large 兼顾质量与大小
+                    "url": p.get("src", {}).get("large"),
                     "thumb_url": p.get("src", {}).get("medium"),
                     "author": p.get("photographer", "Unknown"),
                     "source": "Pexels"
@@ -1237,7 +1262,7 @@ class ImageGeneratorSkill(BaseSkill):
             return []
         try:
             import requests
-            url = f"https://api.unsplash.com/search/photos?query={keywords}&per_page={count}"
+            url = f"https://api.unsplash.com/search/photos?query={keywords}&per_page={count}&orientation=landscape"
             headers = {"Authorization": f"Client-ID {self._unsplash_api_key}"}
             resp = requests.get(url, headers=headers, timeout=10)
             if resp.status_code != 200:
@@ -1257,8 +1282,9 @@ class ImageGeneratorSkill(BaseSkill):
             logger.error(f"Unsplash搜索失败: {str(e)}")
             return []
 
-    def _download_image(self, image_info: Dict, prefix: str) -> Optional[str]:
-        """下载图片"""
+    def _download_image(self, image_info: Dict, prefix: str,
+                       max_width: int = 900, max_height: int = 600) -> Optional[str]:
+        """下载图片（带压缩）"""
         url = image_info.get("url", "")
         if not url:
             return None
@@ -1280,6 +1306,8 @@ class ImageGeneratorSkill(BaseSkill):
                 with open(filepath, "wb") as f:
                     f.write(resp.content)
                 logger.info(f"图片下载成功: {filepath}")
+                # 压缩图片
+                self._compress_image(str(filepath), max_width=max_width, max_height=max_height)
                 return str(filepath)
         except Exception as e:
             logger.error(f"图片下载失败: {str(e)}")

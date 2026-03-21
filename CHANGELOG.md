@@ -2,9 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.0.7] - 2026-03-21
+## [0.0.8] - 2026-03-21
 
 ### Changed
+- h2 标题改为使用 `colors.secondary` 作为字体颜色和左侧装饰线，替代原来的 text/primary 色
+- `colors.secondary` 正式投入使用，theme YAML 中 h2.color 字段移除（由 secondary 替代）
+
+### Fixed
+- `article_writer.py`：修复 YAML 中 `h2.color` 显式定义导致 secondary 默认值不生效的问题
+- `publish.py`：`find_cover_image` 改为优先用 Pexels 横向搜索封面图，解决封面竖图问题
+- `publish.py`：封面图下载后自动压缩（900×500，JPEG 85%）
+- `image_generator.py`：新增 Pillow 图片压缩，封面 900×500 / 插图 900×400，统一 JPEG 85%
+- `image_generator.py`：Pexels/Unsplash 搜索加 `orientation=landscape` 优先横图
+- `draft_skill.py`：`list_drafts` API 返回 key 为 `item`
+
+## [0.0.7] - 2026-03-21
 - 重构 `convert_to_html`：Theme YAML 完整读取，所有颜色/字体/间距从 YAML 配置读取，不再硬编码
 - 5 个主题 YAML（default/houge/macaron/shuimo/wenyan）统一完整字段结构：colors/body/h1-h3/p/link/blockquote/ul/ol
 - 列表改为语义化 `<ul>/<ol>/<li>` 结构

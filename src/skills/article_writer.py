@@ -488,7 +488,8 @@ class ArticleWriterSkill:
             # h2
             h2_fs    = self._gv(cfg, "h2", "font_size", default="18px")
             h2_mgn   = self._gv(cfg, "h2", "margin", default="20px 0 12px")
-            h2_color = self._gv(cfg, "h2", "color", default=text_c)
+            h2_sec   = self._gv(cfg, "colors", "secondary", default=primary)
+            h2_color = self._gv(cfg, "h2", "color", default=h2_sec)
 
             # h3
             h3_fs    = self._gv(cfg, "h3", "font_size", default="15px")
@@ -650,7 +651,7 @@ class ArticleWriterSkill:
                     html.append(
                         f'<h2 style="font-size:{h2_fs};font-weight:bold;'
                         f'color:{h2_color};margin:{h2_mgn};line-height:1.4;'
-                        f'border-left:4px solid {primary};padding-left:10px;">'
+                        f'border-left:4px solid {h2_sec};padding-left:10px;">'
                         f'{self._escape_user_html(line[3:])}</h2>'
                     )
                 elif line.startswith('### '):
