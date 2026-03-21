@@ -14,7 +14,7 @@ import logging
 from pathlib import Path
 from typing import List, Dict, Optional
 from .base_skill import BaseSkill
-from src.config import Config
+from config import Config
 
 # 配置日志
 logger = logging.getLogger(__name__)

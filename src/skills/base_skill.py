@@ -5,9 +5,9 @@
 import requests
 import json
 from typing import Optional, Dict, Any
-from src.token_manager import TokenManager
-from src.config import Config
-from src.exceptions import APIError, get_error_message
+from token_manager import TokenManager
+from config import Config
+from exceptions import APIError, get_error_message
 
 
 class BaseSkill:

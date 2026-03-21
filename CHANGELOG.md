@@ -4,9 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ## [0.0.8] - 2026-03-21
 
+### Added
+- `article_writer.py`：新增 Markdown 语法支持：删除线 `~~text~~`、上标 `^text^`、下标 `~text~`、高亮 `==text==`
+- `article_writer.py`：新增任务列表 `- [ ]` / `- [x]`
+- `article_writer.py`：新增缩进代码块（4空格或tab开头）
+- `article_writer.py`：新增 `*text*` 斜体支持（此前只有 `_text_`）
+- `article_writer.py`：新增 HTML 标签透传（`<br>`、`<div>`、`<details>` 等安全标签保留，`<script>` 等危险标签转义）
+- `article_writer.py`：新增 `---` 分隔线转 `<hr>`
+- `publish.py`：外部图片 URL 自动下载后上传到微信素材库，解决微信不显示外部图片的问题
+
 ### Changed
 - h2 标题改为使用 `colors.secondary` 作为字体颜色和左侧装饰线，替代原来的 text/primary 色
 - `colors.secondary` 正式投入使用，theme YAML 中 h2.color 字段移除（由 secondary 替代）
+- `publish.py`：`--theme` 默认值从 `macaron` 改为 `default`
+- 统一版本号：README.md、SKILL.md、pyproject.toml、metadata.json 均更新至 v0.0.8
 
 ### Fixed
 - `article_writer.py`：修复 YAML 中 `h2.color` 显式定义导致 secondary 默认值不生效的问题
@@ -15,6 +26,7 @@ All notable changes to this project will be documented in this file.
 - `image_generator.py`：新增 Pillow 图片压缩，封面 900×500 / 插图 900×400，统一 JPEG 85%
 - `image_generator.py`：Pexels/Unsplash 搜索加 `orientation=landscape` 优先横图
 - `draft_skill.py`：`list_drafts` API 返回 key 为 `item`
+- 多个 skills 文件：修复 `from src.xxx` import 路径，统一改为 `from xxx`
 
 ## [0.0.7] - 2026-03-21
 - 重构 `convert_to_html`：Theme YAML 完整读取，所有颜色/字体/间距从 YAML 配置读取，不再硬编码

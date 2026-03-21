@@ -63,7 +63,7 @@ class MaterialSkill(BaseSkill):
                 response = requests.post(url, files=files, timeout=60).json()
 
             if "errcode" in response and response["errcode"] != 0:
-                from src.exceptions import APIError
+                from exceptions import APIError
                 error_msg = response.get("errmsg", "")
                 logger.error(f"微信API错误: errcode={response['errcode']}, errmsg={error_msg}")
                 raise APIError(response["errcode"], error_msg)

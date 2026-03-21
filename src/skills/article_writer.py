@@ -58,7 +58,7 @@ class ArticleWriterSkill:
             
             # 如果没有传 template，自动读取配置中的默认模板
             if template is None:
-                from src.config import Config
+                from config import Config
                 config = Config()
                 template = config.get_default_template()
             
@@ -572,7 +572,8 @@ class ArticleWriterSkill:
                 pending_ol_lines.clear()
 
             while i < len(lines):
-                line = lines[i].strip()
+                raw_line = lines[i]
+                line = raw_line.strip()
 
                 # 空行：flush 列表
                 if not line:
@@ -581,7 +582,35 @@ class ArticleWriterSkill:
                     i += 1
                     continue
 
-                # 代码块
+                # 分隔线 ---
+                if line == '---':
+                    flush_ul()
+                    flush_ol()
+                    html.append('<hr style="border:none;border-top:1px solid #e8e8e8;margin:24px 0;">')
+                    i += 1
+                    continue
+
+                # 缩进代码块（4个以上空格开头，或 tab 开头）
+                if raw_line.startswith('    ') or raw_line.startswith('\t'):
+                    flush_ul()
+                    flush_ol()
+                    # 收集所有缩进行
+                    code_lines = [line]
+                    i += 1
+                    while i < len(lines) and (lines[i].startswith('    ') or lines[i].startswith('\t') or lines[i].strip() == ''):
+                        code_lines.append(lines[i].strip())
+                        i += 1
+                    code_content = '\n'.join(code_lines)
+                    code_content = code_content.replace("<", "&lt;").replace(">", "&gt;")
+                    html.append(
+                        f'<pre style="background:#f5f5f5;padding:12px 16px;border-radius:8px;'
+                        f'overflow-x:auto;font-family:monospace;font-size:13px;margin:16px 0;'
+                        f'line-height:1.6;border:1px solid #e8e8e8;">'
+                        f'<code>{code_content}</code></pre>'
+                    )
+                    continue
+
+                # 代码块（``` 形式）
                 if line.startswith('```'):
                     flush_ul()
                     flush_ol()
@@ -686,6 +715,27 @@ class ArticleWriterSkill:
                         f'color:{h3_color};margin:{h3_mgn};line-height:1.4;">'
                         f'{self._escape_user_html(line[7:])}</h6>'
                     )
+                # 任务列表：- [ ] 或 - [x]（必须在普通列表之前检测）
+                elif re.match(r'^(\s*)- \[([ xX])\] (.+)$', line):
+                    flush_ul()
+                    flush_ol()
+                    indent = len(re.match(r'^(\s*)', line).group(1))
+                    checked = re.match(r'^(\s*)- \[([ xX])\] (.+)$', line).group(2).lower() == 'x'
+                    text = re.match(r'^(\s*)- \[([ xX])\] (.+)$', line).group(3)
+                    text = self._convert_inline_formatting(text)
+                    text = self._escape_user_html(text)
+                    checkbox = 'checked' if checked else ''
+                    checkbox_html = (
+                        f'<input type="checkbox" disabled {checkbox} '
+                        f'style="margin-right:8px;vertical-align:middle;pointer-events:none;">'
+                    )
+                    html.append(
+                        f'<div style="margin:10px 0;display:flex;align-items:flex-start;">'
+                        f'{checkbox_html}<span>{text}</span></div>'
+                    )
+                    i += 1
+                    continue
+
                 # 无序列表：暂存
                 elif line.startswith('- ') or line.startswith('* '):
                     pending_ul_lines.append(line[2:])
@@ -747,48 +797,89 @@ class ArticleWriterSkill:
         text = re.sub(r'__([^_]+)__', r'<strong>\1</strong>', text)
         
         # 4. 斜体 *text* 或 _text_
-        # 仅匹配独立的斜体标记，不匹配 URL 中的下划线
-        # 使用负向预见断言：确保下划线两侧不是 URL 字符（字母数字和常见URL字符）
+        # 使用负向预见断言：确保符号两侧不是 URL 字符
+        # *斜体* 处理
+        text = re.sub(r'(?<![a-zA-Z0-9/:.?=&%-])\*([^*]+)\*(?![a-zA-Z0-9/:.?=&%-])', r'<em>\1</em>', text)
+        text = re.sub(r'(?<![a-zA-Z0-9])\*([^*]+)\*(?![a-zA-Z0-9])', r'<em>\1</em>', text)
+        # _斜体_ 处理
         text = re.sub(r'(?<![a-zA-Z0-9/:.?=&%-])_([^_]+)_(?![a-zA-Z0-9/:.?=&%-])', r'<em>\1</em>', text)
-        text = re.sub(r'(?<![a-zA-Z0-9])_([^_]+)_(?![a-zA-Z0-9])', r'<em>\1</em>', text)  # 更严格的匹配
+        text = re.sub(r'(?<![a-zA-Z0-9])_([^_]+)_(?![a-zA-Z0-9])', r'<em>\1</em>', text)
         
         # 5. 行内代码 `code`
         text = re.sub(r'`([^`]+)`', r'<code style="background:#f5f5f5;padding:2px 6px;border-radius:4px;font-family:monospace;font-size:13px;">\1</code>', text)
-        
-        # 6. 恢复被保护的 URL
+
+        # 6. 删除线 ~~text~~
+        text = re.sub(r'~~([^~]+)~~', r'<del style="color:#999;text-decoration:line-through;">\1</del>', text)
+
+        # 7. 上标 ^text^
+        text = re.sub(r'\^([^^]+)\^', r'<sup style="font-size:0.8em;vertical-align:super;">\1</sup>', text)
+
+        # 8. 下标 ~text~
+        text = re.sub(r'~([^~]+)~', r'<sub style="font-size:0.8em;vertical-align:sub;">\1</sub>', text)
+
+        # 9. 高亮 ==text== （仅匹配独立行内，非表格/代码内）
+        text = re.sub(r'==([^=]+)==', r'<mark style="background:#FFF176;padding:1px 3px;border-radius:3px;">\1</mark>', text)
+
+        # 10. 恢复被保护的 URL
         for idx, url in enumerate(protected):
             text = text.replace(f"__PROTECTED_URL_{idx}__", url)
-        
+
+        # 11. 保护生成的HTML标签（避免后续处理被转义）
+        text = self._protect_html_tags(text)
+
         return text
     
     def _escape_user_html(self, text: str) -> str:
-        """转义用户原始文本中的 HTML 标签，保护已生成的标签"""
-        
-        # 使用占位符保护已生成的 HTML 标签（先保护长的，再保护短的）
+        """转义用户原始文本中的 HTML 标签，跳过已保护标签"""
+        # 先用占位符保护已生成的HTML标签
         protected = []
-        def protect_tag(match):
+        def ph(m):
             idx = len(protected)
-            protected.append(match.group(0))
-            return f"__HTML_PLACEHOLDER_{idx}__"
-        
-        # 保护完整标签（按长度从长到短）
-        patterns = [
-            r'<code[^>]*>[^<]*</code>',  # <code>...</code>
-            r'<a[^>]*>[^<]*</a>',        # <a>...</a>
-            r'<img[^>]*/?>',              # <img ... />
-            r'<(/?)(strong|em|blockquote|pre|p|span|h[123])(\s|>)',  # 其他标签
-        ]
-        
-        for pattern in patterns:
-            text = re.sub(pattern, protect_tag, text)
-        
-        # 转义用户原始文本中的 HTML
+            protected.append(m.group(0))
+            return f"__HTAG_{idx}__"
+
+        # 保护已生成的安全标签
+        for t in ('div','span','p','h1','h2','h3','h4','h5','h6',
+                  'ul','ol','li','blockquote','pre','code',
+                  'table','thead','tbody','tr','th','td',
+                  'a','strong','em','del','sup','sub','mark',
+                  'details','summary','figure','figcaption',
+                  'img','br','hr','input'):
+            text = re.sub(f'<{t}[^>]*>.*?</{t}>', ph, text, flags=re.DOTALL)
+            text = re.sub(f'<{t}[^>]*/?>', ph, text)
+
+        # 转义剩余的用户原始HTML
         text = text.replace("<", "&lt;").replace(">", "&gt;")
-        
-        # 恢复已保护的标签
+
+        # 恢复被保护的标签
         for idx, tag in enumerate(protected):
-            text = text.replace(f"__HTML_PLACEHOLDER_{idx}__", tag)
+            text = text.replace(f"__HTAG_{idx}__", tag)
+
+        return text
+
+    def _protect_html_tags(self, text: str) -> str:
+        """保护已生成的 HTML 标签，用占位符替换，避免转义"""
+        protected = []
+        def ph(m):
+            idx = len(protected)
+            protected.append(m.group(0))
+            return f"__HTAG_{idx}__"
         
+        # 成对标签
+        for t in ('div','span','p','h1','h2','h3','h4','h5','h6',
+                  'ul','ol','li','blockquote','pre','code',
+                  'table','thead','tbody','tr','th','td',
+                  'a','strong','em','del','sup','sub','mark',
+                  'details','summary','figure','figcaption'):
+            text = re.sub(f'<{t}[^>]*>.*?</{t}>', ph, text, flags=re.DOTALL)
+        
+        # 自闭合标签
+        for t in ('img','br','hr','input'):
+            text = re.sub(f'<{t}[^>]*/?>', ph, text)
+        
+        # 恢复占位符
+        for idx, tag in enumerate(protected):
+            text = text.replace(f"__HTAG_{idx}__", tag)
         return text
     
     def get_themes(self) -> List[str]:

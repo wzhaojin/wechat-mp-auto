@@ -11,7 +11,7 @@
     -a, --author            作者 (默认: 贾维斯)
     -c, --cover             封面图路径
     -s, --source-url        原文链接 (默认: https://openclaw.ai)
-    --theme                 主题名称 (默认: macaron)
+    --theme                 主题名称 (默认: default)
     --check-only           仅检查，不推送
     -v, --verbose           显示详细日志
 
@@ -77,7 +77,7 @@ def parse_args():
     parser.add_argument('--author', '-a', type=str, default='贾维斯', help='作者 (默认: 贾维斯)')
     parser.add_argument('--cover', '-c', type=str, help='封面图路径 (可选)')
     parser.add_argument('--source-url', '-s', type=str, default='https://openclaw.ai', help='原文链接')
-    parser.add_argument('--theme', type=str, default='macaron', help='主题名称')
+    parser.add_argument('--theme', type=str, default='default', help='主题名称')
     parser.add_argument('--check-only', action='store_true', help='仅检查，不推送')
     parser.add_argument('--verbose', '-v', action='store_true', help='显示详细日志')
     return parser.parse_args()
@@ -336,6 +336,29 @@ def insert_images_to_content(html: str, material_skill, dry_run: bool = False) -
                     actual_path = str(potential)
 
         if not os.path.exists(actual_path):
+            # 外部 URL：下载后上传到微信
+            if img_path.startswith('http://') or img_path.startswith('https://'):
+                try:
+                    import tempfile
+                    import urllib.request
+                    ext = os.path.splitext(img_path.split('?')[0])[1] or '.jpg'
+                    with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as tmp:
+                        tmp_path = tmp.name
+                    urllib.request.urlretrieve(img_path, tmp_path)
+                    result = material_skill.upload_image(tmp_path)
+                    wechat_url = result.get('url')
+                    if wechat_url:
+                        html = html.replace(f'<img src="{img_path}"', f'<img src="{wechat_url}"')
+                        logging.info(f"✓ 外部图片上传成功: {img_path[:60]}...")
+                    else:
+                        logging.warning(f"✗ 外部图片上传失败: {img_path[:60]}")
+                    os.unlink(tmp_path)
+                    processed.append(img_path)
+                    continue
+                except Exception as e:
+                    logging.error(f"✗ 外部图片处理失败: {img_path[:60]}, 错误: {e}")
+                    processed.append(img_path)
+                    continue
             logging.warning(f"图片文件不存在: {img_path}, 跳过")
             continue
 

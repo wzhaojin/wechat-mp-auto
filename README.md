@@ -4,7 +4,7 @@
 
 [![Python Version](https://img.shields.io/badge/python-3.9+-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE.txt)
-[![Version](https://img.shields.io/badge/version-v0.0.6-blue)](SKILL.md)
+[![Version](https://img.shields.io/badge/version-v0.0.8-blue)](SKILL.md)
 
 ## 功能特性
 
@@ -108,7 +108,7 @@ DraftSkill().create_draft([{"title": "...", "content": html, ...}])
 | macaron | 马卡龙风格（粉紫色 #FF6B9D） |
 | shuimo | 水墨风格（深灰蓝 #2C3E50） |
 | wenyan | 文雁风格（深蓝绿 #0066FF） |
-| houge | 猴哥风格（深蓝橙 #1A1A2E） |
+| houge | 猴哥风格（深蓝橙 #6b5b8a） |
 | default | 默认风格（蓝色 #007AFF） |
 
 ## 内容审核详解

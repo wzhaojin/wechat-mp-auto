@@ -1,0 +1,22 @@
+name: Version Consistency Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check version consistency
+        run: |
+          echo "=== 当前版本状态 ==="
+          python scripts/bump_version.py
+          EXIT_CODE=$?
+          echo ""
+          echo "exit code: $EXIT_CODE"
+          exit $EXIT_CODE

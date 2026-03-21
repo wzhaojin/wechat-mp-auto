@@ -1,6 +1,6 @@
 # wechat-mp-auto - 微信公众号自动化 Skill
 
-**版本**: v0.0.6
+**版本**: v0.0.8
 **描述**: 微信公众号文章从选题到发布的全流程自动化
 
 ---
@@ -19,8 +19,8 @@ AI 可调用的所有工具如下，调用时请传入完整参数：
 
 ### 1. 调研工具
 
-**`research_topic(topic: str) -> dict`**
-- 输入：文章主题（字符串）
+**`research_topic(topic: str, keywords: Optional[List[str]] = None) -> dict`**
+- 输入：文章主题（字符串），可选的关键词列表（用于精细化搜索）
 - 输出：`{"search_results": [...], "summary": "..."}`
 - 作用：对给定主题进行网络调研，返回搜索结果摘要
 - 内部级联：Tavily → DuckDuckGo → 百度，任一成功即返回
@@ -107,7 +107,7 @@ AI 可调用的所有工具如下，调用时请传入完整参数：
 
 ### 5. 草稿工具
 
-**`create_draft(articles: list) -> dict`**
+**`create_draft(articles: list, auto_upload_thumb: bool = False) -> dict`**
 - 输入：文章列表，每篇格式如下：
 ```json
 {
