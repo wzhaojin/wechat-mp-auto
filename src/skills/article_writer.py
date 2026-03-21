@@ -444,109 +444,278 @@ class ArticleWriterSkill:
         table_html.append('</table>')
         return table_html, i
 
+    def _read_theme(self, theme: str) -> dict:
+        """读取并解析 theme YAML，返回扁平化配置字典"""
+        import yaml
+        theme_file = self._themes_dir / f"{theme}.yaml"
+        if theme_file.exists():
+            with open(theme_file) as f:
+                return yaml.safe_load(f) or {}
+        return {}
+
+    def _gv(self, d: dict, *keys, default: str = "") -> str:
+        """安全获取嵌套字典值，避免 None"""
+        v = d
+        for k in keys:
+            if isinstance(v, dict):
+                v = v.get(k)
+                if v is None:
+                    return default
+            else:
+                return default
+        return v if v else default
+
     def convert_to_html(self, markdown: str, theme: str = "default") -> str:
         """Markdown 转微信 HTML"""
         try:
-            import yaml
-            
-            theme_file = self._themes_dir / f"{theme}.yaml"
-            if theme_file.exists():
-                with open(theme_file) as f:
-                    theme_config = yaml.safe_load(f) or {}
-            else:
-                theme_config = {"colors": {"primary": "#007AFF"}, "body": {"font_size": "15px", "color": "#333"}}
-            
-            primary = theme_config.get("colors", {}).get("primary", "#007AFF")
-            
-            html = ['<div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; color: #333; line-height: 1.8;">']
-            
-            # 按行处理，保留代码块和引用块
+            cfg = self._read_theme(theme)
+
+            # 颜色
+            primary = self._gv(cfg, "colors", "primary", default="#007AFF")
+            text_c  = self._gv(cfg, "colors", "text", default="#333333")
+            body_bg = self._gv(cfg, "colors", "background", default="")
+
+            # body
+            body_fs = self._gv(cfg, "body", "font_size", default="15px")
+            body_lh = self._gv(cfg, "body", "line_height", default="1.8")
+
+            # h1
+            h1_fs    = self._gv(cfg, "h1", "font_size", default="22px")
+            h1_align = self._gv(cfg, "h1", "text_align", default="center")
+            h1_mgn   = self._gv(cfg, "h1", "margin", default="20px 0")
+            h1_color = self._gv(cfg, "h1", "color", default=primary)
+
+            # h2
+            h2_fs    = self._gv(cfg, "h2", "font_size", default="18px")
+            h2_mgn   = self._gv(cfg, "h2", "margin", default="20px 0 12px")
+            h2_color = self._gv(cfg, "h2", "color", default=text_c)
+
+            # h3
+            h3_fs    = self._gv(cfg, "h3", "font_size", default="15px")
+            h3_mgn   = self._gv(cfg, "h3", "margin", default="16px 0 10px")
+            h3_color = self._gv(cfg, "h3", "color", default=text_c)
+
+            # p
+            p_mgn = self._gv(cfg, "p", "margin", default="14px 0")
+
+            # link
+            link_c  = self._gv(cfg, "link", "color", default=primary)
+            link_dec = self._gv(cfg, "link", "text_decoration", default="none")
+
+            # blockquote
+            bq_color = self._gv(cfg, "blockquote", "color", default="#666666")
+            bq_bg    = self._gv(cfg, "blockquote", "background_color", default="#fff8f0")
+            bq_pad   = self._gv(cfg, "blockquote", "padding", default="10px 16px")
+            bq_mgn   = self._gv(cfg, "blockquote", "margin", default="16px 0")
+
+            # ul
+            ul_mgn = self._gv(cfg, "ul", "margin", default="12px 0")
+            ul_pl  = self._gv(cfg, "ul", "padding_left", default="20px")
+            ul_bc  = self._gv(cfg, "ul", "bullet_color", default=primary)
+
+            # ol
+            ol_mgn = self._gv(cfg, "ol", "margin", default="12px 0")
+            ol_pl  = self._gv(cfg, "ol", "padding_left", default="20px")
+            ol_nc  = self._gv(cfg, "ol", "number_color", default=primary)
+
+            # 外层容器：最大宽度 + 居中
+            bg_style = f"background:{body_bg};" if body_bg else ""
+            wrapper_style = (
+                f"font-family:-apple-system,BlinkMacSystemFont,sans-serif;"
+                f"color:{text_c};line-height:{body_lh};font-size:{body_fs};"
+                f"max-width:680px;margin:0 auto;padding:24px 20px;{bg_style}"
+            )
+
+            # 链接样式注入（覆盖行内 style）
+            link_style = f'a {{color:{link_c};text-decoration:{link_dec};}}'
+            html = [f'<div style="{wrapper_style}"><style>{link_style}</style>']
+
             lines = markdown.split('\n')
             i = 0
+            pending_ul_lines = []
+            pending_ol_lines = []
+
+            def flush_ul():
+                if not pending_ul_lines:
+                    return
+                html.append(
+                    f'<ul style="margin:{ul_mgn};padding-left:0;list-style:none;">'
+                )
+                for ln in pending_ul_lines:
+                    ln = self._convert_inline_formatting(ln)
+                    ln = self._escape_user_html(ln)
+                    html.append(
+                        f'<li style="margin:6px 0;padding-left:16px;position:relative;color:{text_c};line-height:{body_lh};">'
+                        f'<span style="position:absolute;left:0;top:0;color:{ul_bc};font-weight:bold;line-height:{body_lh};">•</span>'
+                        f'{ln}</li>'
+                    )
+                html.append('</ul>')
+                pending_ul_lines.clear()
+
+            def flush_ol():
+                if not pending_ol_lines:
+                    return
+                html.append(
+                    f'<ol style="margin:{ol_mgn};padding-left:{ol_pl};list-style:none;counter-reset:ol-counter;">'
+                )
+                for ln in pending_ol_lines:
+                    ln = self._convert_inline_formatting(ln)
+                    ln = self._escape_user_html(ln)
+                    html.append(
+                        f'<li style="margin:6px 0;padding-left:12px;position:relative;color:{text_c};line-height:{body_lh};'
+                        f'counter-increment:ol-counter;">'
+                        f'<span style="position:absolute;left:0;color:{ol_nc};font-weight:bold;"></span>'
+                        f'{ln}</li>'
+                    )
+                html.append('</ol>')
+                pending_ol_lines.clear()
+
             while i < len(lines):
-                line = lines[i]
-                
-                # 代码块 ```
-                if line.strip().startswith('```'):
-                    lang = line.strip()[3:].strip() if len(line.strip()) > 3 else ''
+                line = lines[i].strip()
+
+                # 空行：flush 列表
+                if not line:
+                    flush_ul()
+                    flush_ol()
+                    i += 1
+                    continue
+
+                # 代码块
+                if line.startswith('```'):
+                    flush_ul()
+                    flush_ol()
                     code_lines = []
                     i += 1
                     while i < len(lines) and not lines[i].strip().startswith('```'):
                         code_lines.append(lines[i])
                         i += 1
                     code_content = '\n'.join(code_lines)
-                    # 转义 HTML
                     code_content = code_content.replace("<", "&lt;").replace(">", "&gt;")
-                    html.append(f'<pre style="background:#f5f5f5;padding:12px;border-radius:8px;overflow-x:auto;font-family:monospace;font-size:13px;margin:12px 0;"><code>{code_content}</code></pre>')
+                    html.append(
+                        f'<pre style="background:#f5f5f5;padding:12px 16px;border-radius:8px;'
+                        f'overflow-x:auto;font-family:monospace;font-size:13px;margin:16px 0;'
+                        f'line-height:1.6;border:1px solid #e8e8e8;">'
+                        f'<code>{code_content}</code></pre>'
+                    )
                     i += 1
                     continue
-                
-                # 引用块 >
-                if line.strip().startswith('>'):
-                    quote_lines = [line.strip()[1:].strip()]
+
+                # 引用块
+                if line.startswith('>'):
+                    flush_ul()
+                    flush_ol()
+                    quote_lines = [line[1:].strip()]
                     i += 1
                     while i < len(lines) and lines[i].strip().startswith('>'):
                         quote_lines.append(lines[i].strip()[1:].strip())
                         i += 1
                     quote_content = '\n'.join(quote_lines)
                     quote_content = self._convert_inline_formatting(quote_content)
-                    html.append(f'<blockquote style="border-left:4px solid {primary};padding-left:16px;margin:12px 0;color:#666;font-style:italic;">{quote_content}</blockquote>')
+                    html.append(
+                        f'<blockquote style="'
+                        f'border-left:4px solid {primary};'
+                        f'background:{bq_bg};'
+                        f'padding:{bq_pad};'
+                        f'margin:{bq_mgn};'
+                        f'color:{bq_color};'
+                        f'font-style:italic;'
+                        f'border-radius:0 4px 4px 0;">'
+                        f'{quote_content}</blockquote>'
+                    )
                     continue
-                
-                line = line.strip()
-                if not line:
-                    i += 1
-                    continue
-                
-                # 表格块（检测连续的多行表格）
+
+                # 表格块
                 if self._is_table_row(line):
+                    flush_ul()
+                    flush_ol()
                     table_html, next_i = self._convert_table_block(lines, i, primary)
                     if table_html:
                         html.extend(table_html)
                         i = next_i
-                        continue
-                
+                    continue
+
                 # 标题
                 if line.startswith('# '):
-                    html.append(f'<h1 style="font-size: 24px; font-weight: bold; text-align: center; color: {primary}; margin: 20px 0;">{line[2:]}</h1>')
+                    flush_ul()
+                    flush_ol()
+                    html.append(
+                        f'<h1 style="font-size:{h1_fs};font-weight:bold;'
+                        f'text-align:{h1_align};color:{h1_color};'
+                        f'margin:{h1_mgn};line-height:1.4;">'
+                        f'{self._escape_user_html(line[2:])}</h1>'
+                    )
                 elif line.startswith('## '):
-                    html.append(f'<h2 style="font-size: 20px; font-weight: bold; margin: 16px 0;">{line[3:]}</h2>')
+                    flush_ul()
+                    flush_ol()
+                    html.append(
+                        f'<h2 style="font-size:{h2_fs};font-weight:bold;'
+                        f'color:{h2_color};margin:{h2_mgn};line-height:1.4;'
+                        f'border-left:4px solid {primary};padding-left:10px;">'
+                        f'{self._escape_user_html(line[3:])}</h2>'
+                    )
                 elif line.startswith('### '):
-                    html.append(f'<h3 style="font-size: 16px; font-weight: bold; margin: 12px 0;">{line[4:]}</h3>')
+                    flush_ul()
+                    flush_ol()
+                    html.append(
+                        f'<h3 style="font-size:{h3_fs};font-weight:bold;'
+                        f'color:{h3_color};margin:{h3_mgn};line-height:1.4;">'
+                        f'{self._escape_user_html(line[4:])}</h3>'
+                    )
                 elif line.startswith('#### '):
-                    html.append(f'<h4 style="font-size: 15px; font-weight: bold; margin: 12px 0;">{line[5:]}</h4>')
+                    flush_ul()
+                    flush_ol()
+                    html.append(
+                        f'<h4 style="font-size:15px;font-weight:bold;'
+                        f'color:{h3_color};margin:{h3_mgn};line-height:1.4;">'
+                        f'{self._escape_user_html(line[5:])}</h4>'
+                    )
                 elif line.startswith('##### '):
-                    html.append(f'<h5 style="font-size: 14px; font-weight: bold; margin: 12px 0;">{line[6:]}</h5>')
+                    flush_ul()
+                    flush_ol()
+                    html.append(
+                        f'<h5 style="font-size:14px;font-weight:bold;'
+                        f'color:{h3_color};margin:{h3_mgn};line-height:1.4;">'
+                        f'{self._escape_user_html(line[6:])}</h5>'
+                    )
                 elif line.startswith('###### '):
-                    html.append(f'<h6 style="font-size: 13px; font-weight: bold; margin: 12px 0;">{line[7:]}</h6>')
-                # 无序列表
+                    flush_ul()
+                    flush_ol()
+                    html.append(
+                        f'<h6 style="font-size:13px;font-weight:bold;'
+                        f'color:{h3_color};margin:{h3_mgn};line-height:1.4;">'
+                        f'{self._escape_user_html(line[7:])}</h6>'
+                    )
+                # 无序列表：暂存
                 elif line.startswith('- ') or line.startswith('* '):
-                    content = line[2:]
-                    content = self._convert_inline_formatting(content)
-                    content = self._escape_user_html(content)
-                    html.append(f'<p style="margin: 8px 0; padding-left: 20px;"><span style="margin-right:8px;">•</span>{content}</p>')
-                # 有序列表
-                elif line.startswith(('1. ', '2. ', '3. ', '4. ', '5. ', '6. ', '7. ', '8. ', '9. ')):
-                    match = re.match(r'^(\d+)\. (.+)$', line)
-                    if match:
-                        num, content = match.groups()
-                        content = self._convert_inline_formatting(content)
-                        content = self._escape_user_html(content)
-                        html.append(f'<p style="margin: 8px 0; padding-left: 20px;"><span style="margin-right:8px;">{num}.</span>{content}</p>')
-                    else:
-                        # 普通段落
-                        line = self._convert_inline_formatting(line)
-                        line = self._escape_user_html(line)
-                        html.append(f'<p style="margin: 8px 0;">{line}</p>')
+                    pending_ul_lines.append(line[2:])
+                    pending_ol_lines.clear()
+                # 有序列表：暂存
+                elif re.match(r'^\d+\.\s', line):
+                    flush_ul()
+                    m = re.match(r'^\d+\.\s+(.*)$', line)
+                    if m:
+                        pending_ol_lines.append(m.group(1))
+                # 普通段落
                 else:
-                    # 普通段落
+                    flush_ul()
+                    flush_ol()
                     line = self._convert_inline_formatting(line)
-                    # 保护已生成的 HTML 标签不被转义
                     line = self._escape_user_html(line)
-                    html.append(f'<p style="margin: 8px 0;">{line}</p>')
-                
+                    # 图片行：检测是否为封面图（alt 含"封面"），封面图 full-width
+                    img_match = re.match(r'^<img[^>]+alt="([^"]*)"[^>]*>$', line)
+                    if img_match:
+                        # 图片：保持 bare img，跟旧版完全一致，不加任何额外 inline style
+                        html.append(f'<p style="margin:14px 0;text-align:center;">{line}</p>')
+                    else:
+                        # 没有 alt 匹配，当普通段落处理
+                        html.append(
+                            f'<p style="margin:{p_mgn};color:{text_c};line-height:{body_lh};">{line}</p>'
+                        )
+
                 i += 1
-            
+
+            flush_ul()
+            flush_ol()
             html.append('</div>')
             return '\n'.join(html)
         except Exception as e:

@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.7] - 2026-03-21
+
+### Changed
+- 重构 `convert_to_html`：Theme YAML 完整读取，所有颜色/字体/间距从 YAML 配置读取，不再硬编码
+- 5 个主题 YAML（default/houge/macaron/shuimo/wenyan）统一完整字段结构：colors/body/h1-h3/p/link/blockquote/ul/ol
+- 列表改为语义化 `<ul>/<ol>/<li>` 结构
+
+### Fixed
+- `publish.py`：修复审核时 `html` 变量未定义的 bug
+- `publish.py`：修复封面图占位符 `cover_image_url` 只替换第一处的问题，改为全局替换
+- `publish.py`：新增章节图占位符 `*_url` 替换逻辑
+- `publish.py`：新增草稿完整性检查中图片 URL 可访问性验证（HEAD 请求）
+- `publish.py`：修复 `find_cover_image` 选中缩略图（_thumb）的问题
+- `publish.py`：修复外部图片 URL 正则无法匹配 `data-src` 和 `https` 协议的问题
+
 ## [0.0.6] - 2026-03-21
 
 ### Added
