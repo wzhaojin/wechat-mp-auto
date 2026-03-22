@@ -2,9 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.0.9] - 2026-03-21
+## [0.1.0] - 2026-03-22
 
-版本号递增，因已有相同版本号发布记录
+### Fixed
+- `token_manager.py`：修复 `from .exceptions` 相对导入在 `-m` 模块方式运行时报错的问题，改为绝对导入
+- `publish.py`：修复章节图永远 fallback 封面图的问题，新增 `img_gen.search_image()` 搜索并上传各章节独立图片
+
+### Changed
+- `draft_skill.py`：统一动态导入为绝对导入风格
 
 ## [0.0.8] - 2026-03-21
 

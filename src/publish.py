@@ -582,7 +582,7 @@ def publish_article(args, components) -> bool:
     cover_wechat_url = cover_result.get('url', '')
     logging.info(f"✓ 封面上传成功: {cover_wechat_url[:40]}...")
 
-    # 6.1 替换 HTML 中所有封面图占位符（全局替换，包括章节图）
+    # 6.1 替换封面图占位符（封面图在 6.2 单独处理）
     if cover_wechat_url:
         count = html.count('src="cover_image_url"')
         html = html.replace('src="cover_image_url"', f'src="{cover_wechat_url}"')

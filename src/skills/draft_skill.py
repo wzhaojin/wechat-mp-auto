@@ -105,7 +105,7 @@ class DraftSkill(BaseSkill):
                         
                         # 下载并上传
                         try:
-                            from .material_skill import MaterialSkill
+                            from material_skill import MaterialSkill
                             mat = MaterialSkill()
                             
                             import requests
