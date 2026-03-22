@@ -590,14 +590,33 @@ def publish_article(args, components) -> bool:
     else:
         logging.warning("⚠️ 封面图无 URL，占位符未替换")
 
-    # 6.2 替换章节图占位符（暂时用封面图替代，保证草稿完整展示）
-    if cover_wechat_url:
-        section_placeholder_pattern = re.compile(r'src="([^"]+_url)"')
-        section_placeholders = section_placeholder_pattern.findall(html)
-        if section_placeholders:
-            for ph in section_placeholders:
-                html = html.replace(f'src="{ph}"', f'src="{cover_wechat_url}"')
-            logging.info(f"✓ 章节图占位符已替换为封面图（{len(section_placeholders)}处）")
+    # 6.2 搜索并上传章节图
+    section_placeholder_pattern = re.compile(r'src="([^"]+_url)"')
+    section_placeholders = section_placeholder_pattern.findall(html)
+    if section_placeholders:
+        logging.info(f"处理 {len(section_placeholders)} 张章节图...")
+        img_gen = components.get('img_generator')
+        for ph in section_placeholders:
+            keyword = ph.replace('_url', '').strip()
+            wechat_url = None
+            # 优先用图库搜索（search_image 返回 local_path）
+            if img_gen:
+                try:
+                    images = img_gen.search_image(keyword, count=3)
+                    if images:
+                        local_path = images[0].get('local_path')
+                        if local_path and os.path.exists(local_path):
+                            up_result = components['material'].upload_image(local_path)
+                            wechat_url = up_result.get('url')
+                            logging.info(f"✓ 章节图上传成功 [{keyword}]: {wechat_url[:40]}...")
+                except Exception as e:
+                    logging.warning(f"  章节图搜索失败 [{keyword}]: {e}")
+            # 上传失败则 fallback 到封面图
+            if not wechat_url:
+                wechat_url = cover_wechat_url
+                logging.warning(f"  章节图 fallback 封面 [{keyword}]")
+            html = html.replace(f'src="{ph}"', f'src="{wechat_url}"')
+        logging.info(f"✓ 章节图处理完成（{len(section_placeholders)}张）")
 
     # 7. 添加 meta 并保存
     html = '<meta charset="utf-8">\n' + html

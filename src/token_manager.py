@@ -145,7 +145,7 @@ class TokenManager:
             ).json()
             
             if "access_token" not in response:
-                from .exceptions import APIError, get_error_message
+                from exceptions import APIError, get_error_message
                 errcode = response.get("errcode", -1)
                 errmsg = response.get("errmsg", get_error_message(errcode))
                 logger.error(f"获取Token失败: errcode={errcode}, errmsg={errmsg}")
