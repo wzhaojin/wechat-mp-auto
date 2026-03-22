@@ -15,12 +15,12 @@ logger = logging.getLogger(__name__)
 
 class ArticleWriterSkill:
     """文章写作"""
-    
+
     def __init__(self):
         self._themes_dir = Path(__file__).parent.parent.parent / "themes"
         self._image_generator = None
         self._cache_dir = Path.home() / ".cache" / "wechat-mp-auto" / "images"
-    
+
     def _get_image_generator(self):
         """延迟加载图片生成器"""
         if self._image_generator is None:
@@ -30,15 +30,15 @@ class ArticleWriterSkill:
             except Exception as e:
                 logger.warning(f"图片生成器初始化失败: {e}")
         return self._image_generator
-    
-    def write_article(self, topic: str, outline: Dict, template: Optional[Dict] = None, 
+
+    def write_article(self, topic: str, outline: Dict, template: Optional[Dict] = None,
                       generate_images: bool = True,
                       material_skill=None,
                       content: Optional[str] = None,
                       section_images: Optional[Dict[str, str]] = None,
                       cover_image: Optional[str] = None) -> Dict:
         """撰写文章
-        
+
         Args:
             topic: 文章主题
             outline: 文章大纲，包含 title 和 sections
@@ -55,30 +55,30 @@ class ArticleWriterSkill:
                 raise ValueError("topic 不能为空")
             if not isinstance(outline, dict):
                 raise ValueError("outline 必须是 dict")
-            
+
             # 如果没有传 template，自动读取配置中的默认模板
             if template is None:
                 from config import Config
                 config = Config()
                 template = config.get_default_template()
-            
+
             theme = template.get("id", "default") if template else "default"
-            
+
             # 生成内容
             sections = outline.get("sections", [])
             title = outline.get('title', topic)
-            
+
             # 确保 cache 目录存在
             if not self._cache_dir.exists():
                 self._cache_dir.mkdir(parents=True, exist_ok=True)
-            
+
             # 用于跟踪所有图片URL（local_path -> wechat_url）
             image_url_map = {}
-            
+
             # ========== 1. 处理封面图 ==========
             cover_wechat_url = cover_image  # 预设的封面URL
             cover_path = None
-            
+
             if not cover_wechat_url and generate_images:
                 img_gen = self._get_image_generator()
                 if img_gen and material_skill:
@@ -102,16 +102,16 @@ class ArticleWriterSkill:
                             logger.info(f"封面上传成功: {cover_wechat_url[:50]}...")
                     except Exception as e:
                         logger.warning(f"封面图生成上传失败: {e}")
-            
+
             # ========== 2. 处理章节插图 ==========
             section_wechat_urls = {}  # {section_name: wechat_url}
-            
+
             # 优先使用预设的章节图片URL（在 generate_images 条件之外）
             if section_images:
                 for section_name, section_url in section_images.items():
                     section_wechat_urls[section_name] = section_url
                     logger.info(f"使用预设章节图: {section_name}")
-            
+
             # 只有需要自动生成时才进入图片生成逻辑
             if generate_images and material_skill:
                 img_gen = self._get_image_generator()
@@ -120,11 +120,11 @@ class ArticleWriterSkill:
                         section_name = section.get("name", "")
                         if not section_name:
                             continue
-                        
+
                         # 跳过已有预设图片的章节（已在上面处理）
                         if section_name in section_wechat_urls:
                             continue
-                        
+
                         # 自动生成并上传
                         try:
                             logger.info(f"生成章节{i+1}插图: {section_name}...")
@@ -136,13 +136,13 @@ class ArticleWriterSkill:
                                 logger.info(f"章节{i+1}上传成功: {illust_result['wechat_url'][:50]}...")
                         except Exception as e:
                             logger.warning(f"生成章节插图失败: {section_name} - {e}")
-            
+
             # ========== 3. 构建文章内容 ==========
             # 如果传入了 content（AI生成的完整内容），优先使用
             if content and isinstance(content, str) and content.strip():
                 logger.info(f"使用预设内容，字数: {len(content)}")
                 markdown_content = content.strip()
-                
+
                 # 插入封面图（插到标题之后）
                 if cover_wechat_url:
                     # 尝试找到第一个标题，把封面图插到它后面
@@ -152,7 +152,7 @@ class ArticleWriterSkill:
                         markdown_content = markdown_content[:pos] + f"\n![封面]({cover_wechat_url})\n" + markdown_content[pos:]
                     else:
                         markdown_content = f"![封面]({cover_wechat_url})\n\n" + markdown_content
-                
+
                 # 插入章节图（在对应的 ## 标题后面）
                 # AI 可能生成 "第X章: 引言" 格式的标题，需支持可选 "第X章:" 前缀
                 CHAPTER_PREFIX = r'(?:第\d+[章节篇][：:\s]*)?'  # 可选的 "第X章:" 前缀
@@ -179,26 +179,26 @@ class ArticleWriterSkill:
             else:
                 # 没有预设内容，从大纲构建
                 content_parts = [f"# {title}\n"]
-                
+
                 # 封面图
                 if cover_wechat_url:
                     content_parts.insert(0, f"![封面]({cover_wechat_url})\n\n")
                 elif cover_path:
                     # 有本地路径但没上传成功，标记一下
                     content_parts.insert(0, f"![封面]({cover_path})\n\n")
-                
+
                 # 章节内容
                 for i, section in enumerate(sections):
                     section_name = section.get("name", "")
                     key_points = section.get("key_points", [])
                     section_content = section.get("content", "")
-                    
+
                     content_parts.append(f"\n## {section_name}\n")
-                    
+
                     # 章节插图 - 优先用微信URL
                     if section_name in section_wechat_urls:
                         content_parts.append(f"![{section_name}]({section_wechat_urls[section_name]})\n\n")
-                    
+
                     # 如果有真实内容，使用它；否则用 key_points 生成
                     if section_content:
                         content_parts.append(f"{section_content}\n")
@@ -206,14 +206,14 @@ class ArticleWriterSkill:
                         for point in key_points:
                             content_parts.append(f"### {point}\n")
                             content_parts.append(f"这是关于 {point} 的详细内容...\n\n")
-                
+
                 markdown_content = "".join(content_parts)
-            
+
             # ========== 4. 处理图片URL ==========
             # 将微信图片URL中的特殊字符（* _）编码，避免被markdown格式转换破坏
             # 例如: http://mmbiz.qpic.cn/sz*mmbiz*jpg -> http://mmbiz.qpic.cn/sz%2Ambiz%2Ajpg
             wx_url_map = {}  # 编码后URL -> 原始URL
-            
+
             def encode_wx_url(match):
                 alt_text = match.group(1)
                 url = match.group(2)
@@ -229,16 +229,16 @@ class ArticleWriterSkill:
                     return f"![{alt_text}]({safe_url})"
                 logger.warning(f"图片未上传到微信: {url}")
                 return match.group(0)
-            
+
             markdown_content = re.sub(r'!\[([^\]]*)\]\(([^)]+)\)', encode_wx_url, markdown_content)
-            
+
             # ========== 5. 转换为 HTML ==========
             html_content = self.convert_to_html(markdown_content, theme)
-            
+
             # ========== 6. 还原微信图片URL ==========
             for safe_url, original_url in wx_url_map.items():
                 html_content = html_content.replace(f'"{safe_url}"', f'"{original_url}"')
-            
+
             return {
                 "topic": topic,
                 "title": title,
@@ -256,59 +256,59 @@ class ArticleWriterSkill:
         except Exception as e:
             logger.error(f"write_article 错误: {e}")
             raise
-    
+
     def ensure_images_uploaded(self, content: str, material_skill) -> str:
         """
         安全网：确保内容中的所有图片都已上传到微信
-        
+
         扫描 markdown 或 HTML 内容中的本地图片路径，
         自动上传到微信素材库并替换为微信URL。
-        
+
         Args:
             content: markdown 或 HTML 内容
             material_skill: 素材管理技能实例
-        
+
         Returns:
             替换后的内容，所有图片均使用微信URL
         """
         if not content or not material_skill:
             return content
-        
+
         # 匹配本地图片路径（相对于cache目录的路径或绝对路径）
         import re
         from pathlib import Path
-        
+
         cache_dir = Path.home() / ".cache" / "wechat-mp-auto" / "images"
-        
+
         def replace_local_image(match):
             alt_or_tag = match.group(1) if match.lastindex >= 1 else ""
             path_or_url = match.group(2) if match.lastindex >= 2 else ""
-            
+
             # 如果已经是http URL，跳过
             if path_or_url.startswith("http"):
                 return match.group(0)
-            
+
             # 跳过已经是完整URL的情况（markdown和HTML通用）
             if path_or_url.startswith("http"):
                 return match.group(0)
-            
+
             # 检查是否是本地文件
             local_path = Path(path_or_url)
             if not local_path.is_absolute():
                 # 相对路径，尝试相对于cache目录
                 local_path = cache_dir / path_or_url
-            
+
             if not local_path.exists():
                 logger.warning(f"本地图片不存在，跳过: {local_path}")
                 return match.group(0)
-            
+
             # 上传到微信
             try:
                 logger.info(f"上传本地图片: {local_path}")
                 result = material_skill.upload_image(str(local_path))
                 wechat_url = result.get("url", "")
                 media_id = result.get("media_id", "")
-                
+
                 if wechat_url:
                     logger.info(f"本地上传成功: {wechat_url[:50]}...")
                     # 替换URL
@@ -324,36 +324,36 @@ class ArticleWriterSkill:
             except Exception as e:
                 logger.error(f"本地上传异常: {e}")
                 return match.group(0)
-        
+
         # 匹配 markdown 图片 ![alt](path)
         content = re.sub(r'!\[([^\]]*)\]\(([^)]+)\)', replace_local_image, content)
-        
+
         # 匹配 HTML img 标签 src 属性中的本地路径
-        content = re.sub(r'<img([^>]*)src="([^"]+)"([^>]*)>', 
-                        lambda m: self._replace_html_img_src(m, material_skill), 
+        content = re.sub(r'<img([^>]*)src="([^"]+)"([^>]*)>',
+                        lambda m: self._replace_html_img_src(m, material_skill),
                         content)
-        
+
         return content
-    
+
     def _replace_html_img_src(self, match, material_skill):
         """替换HTML中img标签的本地src为微信URL"""
         before_src = match.group(1)
         src = match.group(2)
         after_src = match.group(3)
-        
+
         if src.startswith("http"):
             return match.group(0)
-        
+
         from pathlib import Path
         cache_dir = Path.home() / ".cache" / "wechat-mp-auto" / "images"
-        
+
         local_path = Path(src)
         if not local_path.is_absolute():
             local_path = cache_dir / src
-        
+
         if not local_path.exists():
             return match.group(0)
-        
+
         try:
             result = material_skill.upload_image(str(local_path))
             wechat_url = result.get("url", "")
@@ -362,7 +362,7 @@ class ArticleWriterSkill:
                 return f'<img{before_src}src="{wechat_url}"{after_src}>'
         except Exception as e:
             logger.warning(f"HTML图片上传失败: {e}")
-        
+
         return match.group(0)
 
     def count_words(self, content: str) -> int:
@@ -374,7 +374,7 @@ class ArticleWriterSkill:
         except Exception as e:
             logger.error(f"count_words 错误: {e}")
             return 0
-    
+
     def _is_table_row(self, line: str) -> bool:
         """判断是否是大纲中的表格行"""
         line = line.strip()
@@ -398,27 +398,27 @@ class ArticleWriterSkill:
                 break
             table_lines.append(line)
             i += 1
-        
+
         if len(table_lines) < 2:
             return None, start_idx
-        
+
         # 解析表格
         def parse_row(row: str) -> List[str]:
             parts = [p.strip() for p in row.split('|')]
             return [p for p in parts if p]  # 过滤空字符串
-        
+
         rows = [parse_row(line) for line in table_lines]
-        
+
         # 检查是否有分隔行（第二行是 --- 等）
         has_header_separator = False
         if len(rows) >= 2:
             second_row = rows[1]
             if all(re.match(r'^[-:]+$', cell) for cell in second_row):
                 has_header_separator = True
-        
+
         # 构建HTML表格
         table_html = ['<table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;">']
-        
+
         # 表头
         header_cells = rows[0]
         table_html.append('  <thead><tr>')
@@ -427,7 +427,7 @@ class ArticleWriterSkill:
             cell_content = self._escape_user_html(cell_content)
             table_html.append(f'    <th style="border:1px solid #ddd;padding:8px 12px;background:#f5f5f5;font-weight:bold;text-align:left;">{cell_content}</th>')
         table_html.append('  </tr></thead>')
-        
+
         # 表体
         body_start = 2 if has_header_separator else 1
         if body_start < len(rows):
@@ -440,7 +440,7 @@ class ArticleWriterSkill:
                     table_html.append(f'      <td style="border:1px solid #ddd;padding:8px 12px;">{cell_content}</td>')
                 table_html.append('    </tr>')
             table_html.append('  </tbody>')
-        
+
         table_html.append('</table>')
         return table_html, i
 
@@ -490,11 +490,19 @@ class ArticleWriterSkill:
             h2_mgn   = self._gv(cfg, "h2", "margin", default="20px 0 12px")
             h2_sec   = self._gv(cfg, "colors", "secondary", default=primary)
             h2_color = self._gv(cfg, "h2", "color", default=h2_sec)
+            h2_bg    = self._gv(cfg, "h2", "background_color", default="")
+            h2_pad   = self._gv(cfg, "h2", "padding", default="")
 
             # h3
             h3_fs    = self._gv(cfg, "h3", "font_size", default="15px")
             h3_mgn   = self._gv(cfg, "h3", "margin", default="16px 0 10px")
             h3_color = self._gv(cfg, "h3", "color", default=text_c)
+            h3_bb    = self._gv(cfg, "h3", "border_bottom", default="")
+            h3_pad   = self._gv(cfg, "h3", "padding", default="")
+
+            # strong & em
+            self.strong_color = self._gv(cfg, "strong", "color", default="")
+            self.em_color      = self._gv(cfg, "em", "color", default="")
 
             # p
             p_mgn = self._gv(cfg, "p", "margin", default="14px 0")
@@ -508,6 +516,7 @@ class ArticleWriterSkill:
             bq_bg    = self._gv(cfg, "blockquote", "background_color", default="#fff8f0")
             bq_pad   = self._gv(cfg, "blockquote", "padding", default="10px 16px")
             bq_mgn   = self._gv(cfg, "blockquote", "margin", default="16px 0")
+            bq_bl    = self._gv(cfg, "blockquote", "border_left", default="")
 
             # ul
             ul_mgn = self._gv(cfg, "ul", "margin", default="12px 0")
@@ -641,9 +650,10 @@ class ArticleWriterSkill:
                         i += 1
                     quote_content = '\n'.join(quote_lines)
                     quote_content = self._convert_inline_formatting(quote_content)
+                    bq_bl_style = f"border-left:{bq_bl};" if bq_bl else f"border-left:4px solid {primary};"
                     html.append(
                         f'<blockquote style="'
-                        f'border-left:4px solid {primary};'
+                        f'{bq_bl_style}'
                         f'background:{bq_bg};'
                         f'padding:{bq_pad};'
                         f'margin:{bq_mgn};'
@@ -677,18 +687,22 @@ class ArticleWriterSkill:
                 elif line.startswith('## '):
                     flush_ul()
                     flush_ol()
+                    h2_bg_style = f"background-color:{h2_bg};display:block;" if h2_bg else ""
+                    h2_pad_style = f"padding:{h2_pad};" if h2_pad else ("padding:3px 10px;" if h2_bg else "padding-left:10px;")
                     html.append(
                         f'<h2 style="font-size:{h2_fs};font-weight:bold;'
-                        f'color:{h2_color};margin:{h2_mgn};line-height:1.4;'
-                        f'border-left:4px solid {h2_sec};padding-left:10px;">'
+                        f'{h2_bg_style}color:{h2_color};margin:{h2_mgn};line-height:1.4;'
+                        f'border-left:10px solid {h2_sec};{h2_pad_style}">'
                         f'{self._escape_user_html(line[3:])}</h2>'
                     )
                 elif line.startswith('### '):
                     flush_ul()
                     flush_ol()
+                    h3_bb_style = f"border-bottom:{h3_bb};padding-bottom:6px;" if h3_bb else ""
+                    h3_pad_style = f"padding:{h3_pad};" if h3_pad else ""
                     html.append(
                         f'<h3 style="font-size:{h3_fs};font-weight:bold;'
-                        f'color:{h3_color};margin:{h3_mgn};line-height:1.4;">'
+                        f'color:{h3_color};margin:{h3_mgn};line-height:1.4;{h3_bb_style}{h3_pad_style}">'
                         f'{self._escape_user_html(line[4:])}</h3>'
                     )
                 elif line.startswith('#### '):
@@ -772,7 +786,7 @@ class ArticleWriterSkill:
         except Exception as e:
             logger.error(f"convert_to_html 错误: {e}")
             raise
-    
+
     def _convert_inline_formatting(self, text: str) -> str:
         """转换行内格式：加粗、斜体、链接、图片"""
         # 0. 保护 HTML 属性中的 URL 和属性值（先于所有转换）
@@ -782,29 +796,33 @@ class ArticleWriterSkill:
             idx = len(protected)
             protected.append(match.group(0))
             return f"__PROTECTED_URL_{idx}__"
-        
+
         # 保护 src= 和 href= 属性值（URL）
         text = re.sub(r'(src|href)="([^"]+)"', protect_url, text)
-        
+
         # 1. 处理 markdown 图片 ![alt](url) -> <img src="url" alt="alt" />
         text = re.sub(r'!\[([^\]]*)\]\(([^)]+)\)', r'<img src="\2" alt="\1" />', text)
-        
+
         # 2. 链接 [text](url)
         text = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', r'<a href="\2" style="color:#007AFF;text-decoration:none;">\1</a>', text)
-        
+
         # 3. 加粗 **text** 或 __text__
-        text = re.sub(r'\*\*([^*]+)\*\*', r'<strong>\1</strong>', text)
-        text = re.sub(r'__([^_]+)__', r'<strong>\1</strong>', text)
-        
+        strong_style = f"color:{self.strong_color};font-weight:bold;" if self.strong_color else "font-weight:bold;"
+        text = re.sub(r'\*\*([^*]+)\*\*', rf'<strong style="{strong_style}">\1</strong>', text)
+        text = re.sub(r'__([^_]+)__', rf'<strong style="{strong_style}">\1</strong>', text)
+
         # 4. 斜体 *text* 或 _text_
+        em_style = f"color:{self.em_color};font-style:normal;" if self.em_color else ""
+        em_tag = f'<em style="{em_style}">' if em_style else "<em>"
+        em_close = "</em>"
         # 使用负向预见断言：确保符号两侧不是 URL 字符
         # *斜体* 处理
-        text = re.sub(r'(?<![a-zA-Z0-9/:.?=&%-])\*([^*]+)\*(?![a-zA-Z0-9/:.?=&%-])', r'<em>\1</em>', text)
-        text = re.sub(r'(?<![a-zA-Z0-9])\*([^*]+)\*(?![a-zA-Z0-9])', r'<em>\1</em>', text)
+        text = re.sub(r'(?<![a-zA-Z0-9/:.?=&%-])\*([^*]+)\*(?![a-zA-Z0-9/:.?=&%-])', em_tag + r'\1' + em_close, text)
+        text = re.sub(r'(?<![a-zA-Z0-9])\*([^*]+)\*(?![a-zA-Z0-9])', em_tag + r'\1' + em_close, text)
         # _斜体_ 处理
-        text = re.sub(r'(?<![a-zA-Z0-9/:.?=&%-])_([^_]+)_(?![a-zA-Z0-9/:.?=&%-])', r'<em>\1</em>', text)
-        text = re.sub(r'(?<![a-zA-Z0-9])_([^_]+)_(?![a-zA-Z0-9])', r'<em>\1</em>', text)
-        
+        text = re.sub(r'(?<![a-zA-Z0-9/:.?=&%-])_([^_]+)_(?![a-zA-Z0-9/:.?=&%-])', em_tag + r'\1' + em_close, text)
+        text = re.sub(r'(?<![a-zA-Z0-9])_([^_]+)_(?![a-zA-Z0-9])', em_tag + r'\1' + em_close, text)
+
         # 5. 行内代码 `code`
         text = re.sub(r'`([^`]+)`', r'<code style="background:#f5f5f5;padding:2px 6px;border-radius:4px;font-family:monospace;font-size:13px;">\1</code>', text)
 
@@ -828,7 +846,7 @@ class ArticleWriterSkill:
         text = self._protect_html_tags(text)
 
         return text
-    
+
     def _escape_user_html(self, text: str) -> str:
         """转义用户原始文本中的 HTML 标签，跳过已保护标签"""
         # 先用占位符保护已生成的HTML标签
@@ -864,7 +882,7 @@ class ArticleWriterSkill:
             idx = len(protected)
             protected.append(m.group(0))
             return f"__HTAG_{idx}__"
-        
+
         # 成对标签
         for t in ('div','span','p','h1','h2','h3','h4','h5','h6',
                   'ul','ol','li','blockquote','pre','code',
@@ -872,16 +890,16 @@ class ArticleWriterSkill:
                   'a','strong','em','del','sup','sub','mark',
                   'details','summary','figure','figcaption'):
             text = re.sub(f'<{t}[^>]*>.*?</{t}>', ph, text, flags=re.DOTALL)
-        
+
         # 自闭合标签
         for t in ('img','br','hr','input'):
             text = re.sub(f'<{t}[^>]*/?>', ph, text)
-        
+
         # 恢复占位符
         for idx, tag in enumerate(protected):
             text = text.replace(f"__HTAG_{idx}__", tag)
         return text
-    
+
     def get_themes(self) -> List[str]:
         """获取主题列表"""
         try:

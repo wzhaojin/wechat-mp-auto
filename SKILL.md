@@ -55,8 +55,7 @@ AI 可调用的所有工具如下，调用时请传入完整参数：
   - `shuimo` — 水墨深灰蓝
   - `wenyan` — 文雁深蓝绿
   - `houge` — 猴哥深蓝橙
-
----
+  - `cuiyu` — 翠玉青绿黄
 
 ### 3. 图片工具
 
@@ -300,7 +299,8 @@ wechat-mp-auto/
     ├── macaron.yaml
     ├── shuimo.yaml
     ├── wenyan.yaml
-    └── houge.yaml
+    ├── houge.yaml
+    └── cuiyu.yaml
 ```
 
 ---

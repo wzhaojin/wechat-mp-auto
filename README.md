@@ -15,7 +15,7 @@
 - **智能配图** - Pexels/Unsplash 图库搜索 + AI 生图（可选择）
 - **图片处理** - 调整微信尺寸、压缩
 - **内容审核** - 本地+网络重复度检测、敏感词扫描
-- **模板管理** - 5 种本地主题切换（default/macaron/shuimo/wenyan/houge）
+- **模板管理** - 6 种本地主题切换（default/macaron/shuimo/wenyan/houge/cuiyu）
 - **草稿发布** - 一键推送到公众号草稿箱
 
 ## 快速开始
@@ -109,6 +109,7 @@ DraftSkill().create_draft([{"title": "...", "content": html, ...}])
 | shuimo | 水墨风格（深灰蓝 #2C3E50） |
 | wenyan | 文雁风格（深蓝绿 #0066FF） |
 | houge | 猴哥风格（深蓝橙 #6b5b8a） |
+| cuiyu | 翠玉风格（青绿 #1EA089） |
 | default | 默认风格（蓝色 #007AFF） |
 
 ## 内容审核详解
@@ -152,7 +153,8 @@ wechat-mp-auto/
     ├── macaron.yaml
     ├── shuimo.yaml
     ├── wenyan.yaml
-    └── houge.yaml
+    ├── houge.yaml
+    └── cuiyu.yaml
 ```
 
 ## 注意事项
