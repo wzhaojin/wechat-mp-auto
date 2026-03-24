@@ -1,0 +1,48 @@
+name: 水墨
+
+colors:
+  primary: "#2C3E50"
+  secondary: "#34495E"
+  text: "#333333"
+  background: "#f5f5f0"
+
+body:
+  font_size: "16px"
+  line_height: "2"
+
+h1:
+  font_size: "22px"
+  text_align: "center"
+  margin: "20px 0"
+
+h2:
+  font_size: "18px"
+  margin: "20px 0 12px"
+
+h3:
+  font_size: "15px"
+  margin: "16px 0 10px"
+  color: "#333333"
+
+p:
+  margin: "14px 0"
+
+link:
+  color: "#2C3E50"
+  text_decoration: "none"
+
+blockquote:
+  color: "#666666"
+  background_color: "#f0f0eb"
+  padding: "10px 16px"
+  margin: "16px 0"
+
+ul:
+  margin: "12px 0"
+  padding_left: "20px"
+  bullet_color: "#2C3E50"
+
+ol:
+  margin: "12px 0"
+  padding_left: "20px"
+  number_color: "#2C3E50"

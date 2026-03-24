@@ -1,0 +1,35 @@
+{
+  "name": "wechat-mp-auto",
+  "description": "微信公众号自动化Skill，可直接在openclaw等支持skill的平台中使用。实现微信公众号文章从选题、写作，配图、审核到发布的全流程自动化。",
+  "version": "v0.1.2",
+  "author": "wzhaojin",
+  "homepage": "https://github.com/wzhaojin/wechat-mp-auto",
+  "tags": [
+    "wechat",
+    "automation",
+    "openclaw",
+    "weixin",
+    "article",
+    "publish"
+  ],
+  "always": false,
+  "env": {
+    "required": [
+      "WECHAT_APP_ID",
+      "WECHAT_APP_SECRET"
+    ],
+    "optional": [
+      "PEXELS_API_KEY",
+      "UNSPLASH_API_KEY",
+      "OPENAI_API_KEY",
+      "TAVILY_API_KEY"
+    ],
+    "alsoReads": [
+      ".env"
+    ]
+  },
+  "paths": {
+    "config": "~/.config/wechat-mp-auto",
+    "cache": "~/.cache/wechat-mp-auto"
+  }
+}

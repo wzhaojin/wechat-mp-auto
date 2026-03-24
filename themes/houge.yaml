@@ -1,0 +1,48 @@
+name: 猴哥风格
+
+colors:
+  primary: "#ff6b00"
+  secondary: "#6b5b8a"
+  text: "#333333"
+  background: "#fafafa"
+
+body:
+  font_size: "16px"
+  line_height: "1.8"
+
+h1:
+  font_size: "22px"
+  text_align: "center"
+  margin: "20px 0"
+
+h2:
+  font_size: "18px"
+  margin: "20px 0 12px"
+
+h3:
+  font_size: "15px"
+  margin: "16px 0 10px"
+  color: "#333333"
+
+p:
+  margin: "14px 0"
+
+link:
+  color: "#ff6b00"
+  text_decoration: "none"
+
+blockquote:
+  color: "#666666"
+  background_color: "#fff8f0"
+  padding: "10px 16px"
+  margin: "16px 0"
+
+ul:
+  margin: "12px 0"
+  padding_left: "20px"
+  bullet_color: "#ff6b00"
+
+ol:
+  margin: "12px 0"
+  padding_left: "20px"
+  number_color: "#ff6b00"

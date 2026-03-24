@@ -1,0 +1,48 @@
+name: 默认主题
+
+colors:
+  primary: "#007AFF"
+  secondary: "#5856D6"
+  text: "#333333"
+  background: "#f0f4ff"
+
+body:
+  font_size: "15px"
+  line_height: "1.8"
+
+h1:
+  font_size: "22px"
+  text_align: "center"
+  margin: "20px 0"
+
+h2:
+  font_size: "18px"
+  margin: "20px 0 12px"
+
+h3:
+  font_size: "15px"
+  margin: "16px 0 10px"
+  color: "#333333"
+
+p:
+  margin: "14px 0"
+
+link:
+  color: "#007AFF"
+  text_decoration: "none"
+
+blockquote:
+  color: "#666666"
+  background_color: "#f0f5ff"
+  padding: "10px 16px"
+  margin: "16px 0"
+
+ul:
+  margin: "12px 0"
+  padding_left: "20px"
+  bullet_color: "#007AFF"
+
+ol:
+  margin: "12px 0"
+  padding_left: "20px"
+  number_color: "#007AFF"

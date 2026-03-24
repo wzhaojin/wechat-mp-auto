@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wechat-mp-auto"
+version = "0.1.2"
+description = "微信公众号自动化工具 - 选题、写作、配图、审核、草稿、发布全流程自动化"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "wzhaojin", email = "wzhaojin.cn@gmail.com"}
+]
+keywords = ["wechat", "微信公众号", "automation", "openclaw", "ai"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+dependencies = [
+    "requests>=2.28.0",
+    "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+image = ["Pillow>=9.0.0"]
+ai = ["openai>=1.0.0"]
+dev = ["pytest>=7.0.0"]
+
+[project.scripts]
+wechat-mp-publish = "publish:main"
+
+[tool.setuptools]
+packages = ["src", "src.skills", "src.utils", "src.formatters"]
+
+[tool.pytest.ini_options]
+testpaths = ["test*.py"]
+python_files = ["test_*.py"]

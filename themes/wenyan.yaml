@@ -1,0 +1,48 @@
+name: 文雁
+
+colors:
+  primary: "#0066FF"
+  secondary: "#00D4AA"
+  text: "#1A1A2E"
+  background: "#fff8f0"
+
+body:
+  font_size: "15px"
+  line_height: "1.75"
+
+h1:
+  font_size: "22px"
+  text_align: "center"
+  margin: "20px 0"
+
+h2:
+  font_size: "18px"
+  margin: "20px 0 12px"
+
+h3:
+  font_size: "15px"
+  margin: "16px 0 10px"
+  color: "#1A1A2E"
+
+p:
+  margin: "14px 0"
+
+link:
+  color: "#0066FF"
+  text_decoration: "none"
+
+blockquote:
+  color: "#666666"
+  background_color: "#fff5eb"
+  padding: "10px 16px"
+  margin: "16px 0"
+
+ul:
+  margin: "12px 0"
+  padding_left: "20px"
+  bullet_color: "#0066FF"
+
+ol:
+  margin: "12px 0"
+  padding_left: "20px"
+  number_color: "#0066FF"

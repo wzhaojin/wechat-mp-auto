@@ -1,0 +1,48 @@
+name: 马卡龙
+
+colors:
+  primary: "#FF6B9D"
+  secondary: "#C9A0DC"
+  text: "#4A4A4A"
+  background: "#fdf2f8"
+
+body:
+  font_size: "15px"
+  line_height: "1.8"
+
+h1:
+  font_size: "22px"
+  text_align: "center"
+  margin: "20px 0"
+
+h2:
+  font_size: "18px"
+  margin: "20px 0 12px"
+
+h3:
+  font_size: "15px"
+  margin: "16px 0 10px"
+  color: "#4A4A4A"
+
+p:
+  margin: "14px 0"
+
+link:
+  color: "#FF6B9D"
+  text_decoration: "none"
+
+blockquote:
+  color: "#666666"
+  background_color: "#fff0f5"
+  padding: "10px 16px"
+  margin: "16px 0"
+
+ul:
+  margin: "12px 0"
+  padding_left: "20px"
+  bullet_color: "#FF6B9D"
+
+ol:
+  margin: "12px 0"
+  padding_left: "20px"
+  number_color: "#FF6B9D"
