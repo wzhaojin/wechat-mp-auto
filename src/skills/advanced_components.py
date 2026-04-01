@@ -162,9 +162,55 @@ class AdvancedComponents:
 </section>'''
 
     def parse(self, markdown: str, primary: str) -> str:
-        """解析并替换 ::: 高级组件语法"""
-        # 支持 ::: container 或 :::container 语法
-        pattern = r'::: ?(\w+)([^\n]*)\n([\s\S]*?):::'
+        """解析并替换 ::: 高级组件语法（逐行解析，避免与 --- 分隔符冲突）"""
+        lines = markdown.split('\n')
+        result = []
+        i = 0
+
+        while i < len(lines):
+            line = lines[i]
+
+            # 检查是否是以 ::: 开头的组件开始
+            # 匹配 ::: type 或 :::type
+            match = re.match(r'^:::\s*(\w+)(.*)$', line)
+            if match:
+                container_type = match.group(1).strip()
+                params = match.group(2).strip()
+
+                # 收集组件内容，直到遇到单独的 ::: 行
+                content_lines = []
+                j = i + 1
+                while j < len(lines):
+                    if lines[j].strip() == ':::':
+                        break
+                    content_lines.append(lines[j])
+                    j += 1
+
+                content = '\n'.join(content_lines)
+
+                # 渲染组件
+                if container_type == 'release':
+                    comp_html = self._render_release(content, params, primary)
+                elif container_type == 'grid':
+                    comp_html = self._render_grid(content, params, primary)
+                elif container_type == 'timeline':
+                    comp_html = self._render_timeline(content, params, primary)
+                elif container_type == 'steps':
+                    comp_html = self._render_steps(content, params, primary)
+                elif container_type == 'compare':
+                    comp_html = self._render_compare(content, params, primary)
+                elif container_type == 'focus':
+                    comp_html = self._render_focus(content, params, primary)
+                else:
+                    comp_html = f'<div style="margin:16px 0;padding:16px;border:1px dashed #ccc;">{content}</div>'
+
+                result.append(comp_html)
+                i = j + 1  # 跳过内容行和结束的 :::
+            else:
+                result.append(line)
+                i += 1
+
+        return '\n'.join(result)
 
         def replace_container(match):
             container_type = match.group(1).strip()

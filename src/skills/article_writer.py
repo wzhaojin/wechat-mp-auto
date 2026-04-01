@@ -761,14 +761,25 @@ class ArticleWriterSkill:
             html = [f'<div style="{wrapper_style}"><style>{link_style}</style>']
 
             # 解析高级组件 ::: syntax (使用占位符保护HTML)
+            # 匹配 :::type 开头的内容块，结束于单独成行的 :::
+            # 内容中可能包含 --- 分隔符
+            self._adv_components = []
             adv = AdvancedComponents()
-            adv_components = []
-            def protect_adv(m):
-                idx = len(adv_components)
-                comp_html = adv.parse(m.group(0), primary)
-                adv_components.append(comp_html)
-                return f"__ADV_COMP_{idx}__"
-            markdown = re.sub(r':::\s*\w+[^\n]*\n[\s\S]*?:::', protect_adv, markdown)
+
+            def replace_container(match):
+                idx = len(self._adv_components)
+                comp_html = adv.parse(match.group(0), primary)
+                self._adv_components.append(comp_html)
+                return f"__ADV_COMP_{idx}__\n"
+
+            # 匹配模式: 从 :::type 到单独成行的 :::
+            # 闭合判断: ::: 后面只有空白字符和换行，不是 ::: xxx
+            markdown = re.sub(
+                r':::\s*(\w+)[^\n]*\n(?:(?!:::)[^\n]*\n)*?:::\s*\n',
+                replace_container,
+                markdown,
+                flags=re.MULTILINE
+            )
 
             lines = markdown.split('\n')
             i = 0
@@ -1038,6 +1049,18 @@ class ArticleWriterSkill:
                     i += 1
                     continue
 
+                # 高级组件占位符：直接输出 HTML，不包装
+                elif '__ADV_COMP_' in line:
+                    flush_ul()
+                    flush_ol()
+                    # 找到对应的组件索引
+                    comp_match = re.search(r'__ADV_COMP_(\d+)__', line)
+                    if comp_match:
+                        idx = int(comp_match.group(1))
+                        if idx < len(self._adv_components):
+                            html.append(self._adv_components[idx])
+                    i += 1
+                    continue
                 # 无序列表：暂存
                 elif line.startswith('- ') or line.startswith('* '):
                     pending_ul_lines.append(line[2:])
@@ -1081,7 +1104,7 @@ class ArticleWriterSkill:
             result = self.inject_section_images(result, section_images)
 
         # 恢复高级组件 HTML
-        for idx, comp_html in enumerate(adv_components):
+        for idx, comp_html in enumerate(self._adv_components):
             result = result.replace(f"__ADV_COMP_{idx}__", comp_html)
 
         return result
