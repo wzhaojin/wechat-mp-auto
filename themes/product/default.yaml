@@ -8,3 +8,9 @@ styles:
     font_size: "15px"
     color: "#444444"
     line_height: "1.8"
+  h2:
+    style: "pill"
+    font_size: "20px"
+    font_weight: "bold"
+    margin: "16px 0"
+    color: "#c25e3a"

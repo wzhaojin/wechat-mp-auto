@@ -18,6 +18,7 @@ styles:
     margin: 20px 0
     color: '#1A1A1A'
   h2:
+    style: "pill"
     font_size: 22px
     font_weight: bold
     color: white
