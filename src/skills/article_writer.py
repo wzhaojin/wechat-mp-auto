@@ -592,8 +592,9 @@ class ArticleWriterSkill:
         # 注意：不再删除 img 标签（之前这行会把所有 <img> 替换为空格，导致图片丢失）
 
         # Step 2: Remove unwanted spaces
+        # 注意：排除 - (破折号)，保留 "A - 中文" 或 "中文 - A" 中的空格
         html = re.sub(r'([\u4e00-\u9fff]) +([^\s])', r'\1\2', html)
-        html = re.sub(r'([^\s\u4e00-\u9fff]) +([\u4e00-\u9fff])', r'\1\2', html)
+        html = re.sub(r'([^\s\u4e00-\u9fff-]) +([\u4e00-\u9fff])', r'\1\2', html)
 
         # Step 3: Restore tags
         for i, tag_html in enumerate(protected):
