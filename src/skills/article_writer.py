@@ -760,9 +760,15 @@ class ArticleWriterSkill:
             link_style = f'a {{color:{link_c};text-decoration:{link_dec};}}'
             html = [f'<div style="{wrapper_style}"><style>{link_style}</style>']
 
-            # 解析高级组件 ::: syntax
+            # 解析高级组件 ::: syntax (使用占位符保护HTML)
             adv = AdvancedComponents()
-            markdown = adv.parse(markdown, primary)
+            adv_components = []
+            def protect_adv(m):
+                idx = len(adv_components)
+                comp_html = adv.parse(m.group(0), primary)
+                adv_components.append(comp_html)
+                return f"__ADV_COMP_{idx}__"
+            markdown = re.sub(r':::\s*\w+[^\n]*\n[\s\S]*?:::', protect_adv, markdown)
 
             lines = markdown.split('\n')
             i = 0
@@ -1073,6 +1079,11 @@ class ArticleWriterSkill:
         result = self._remove_mixed_language_spaces(result)
         if section_images:
             result = self.inject_section_images(result, section_images)
+
+        # 恢复高级组件 HTML
+        for idx, comp_html in enumerate(adv_components):
+            result = result.replace(f"__ADV_COMP_{idx}__", comp_html)
+
         return result
 
     def _convert_inline_formatting(self, text: str) -> str:
