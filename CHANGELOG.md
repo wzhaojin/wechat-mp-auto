@@ -1,3 +1,31 @@
+## [0.2.0-dev] - 2026-04-01
+
+### Added
+- `content_optimizer.py`：【新增】内容优化技能，去除AI生成内容的痕迹，使文本更自然
+  - 支持词汇替换（首先→一开始、然而→但是）
+  - 支持情感词增强和个人视角添加
+  - 支持打破完美句式（口语化停顿）
+- `html_optimizer.py`：【增强】HTML优化技能，添加分级警告系统
+  - INFO/WARNING/ERROR/CRITICAL 四级警告
+  - 压缩率报告（original_size/compressed_size/ratio）
+  - 微信不支持标签自动检测
+- `comment_skill.py`：【新增】评论管理技能，支持完整留言管理
+  - open/close comment（打开/关闭留言）
+  - get_comment_list（查看留言）
+  - mark_elect/unmark_elect comment（标记/取消精选）
+  - reply/delete comment（回复/删除留言）
+- `exceptions.py`：【增强】
+  - 指数退避重试装饰器 `@retry_with_backoff`
+  - 完整错误码映射表（400+错误码详细说明）
+- `article_writer.py`：【增强】
+  - 新增 YIQ 对比色计算（`_get_contrast_color`）
+  - 新增 RGBA 转换（`_hex_to_rgba`）
+  - H2 支持圆角色块样式（pill badge，需配置 `h2.style: pill`）
+
+### Changed
+- `SKILL.md`：新增工具文档（内容优化、评论管理）
+- 版本号升至 v0.2.0-dev
+
 ## [0.1.2] - 2026-03-24
 
 ### Fixed

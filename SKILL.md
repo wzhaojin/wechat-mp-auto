@@ -104,6 +104,49 @@ AI 可调用的所有工具如下，调用时请传入完整参数：
 
 ---
 
+### 4.1 内容优化工具（去AI味）【新增】
+
+**`humanize_text(text: str, intensity: float = 0.7) -> str`**
+- 输入：原始文本 + 优化强度 (0.0-1.0)
+- 输出：优化后的文本
+- 作用：去除AI生成内容的常见痕迹，使文本更自然
+- 优化策略：
+  - 词汇替换：首先→一开始、然而→但是、因此→所以
+  - 情感增强：添加"说实话"、"其实"、"没想到"等情感词
+  - 个人视角：添加"我觉得"、"以我的经验"等个人化表达
+  - 打破完美：添加口语化停顿（——、…、"那个，"）
+
+**`compress_html(html_content: str, remove_comments: bool = True) -> str`**
+- 输入：HTML 内容
+- 输出：压缩后的 HTML
+- 作用：压缩 HTML，移除注释、空格，优化内联样式
+
+**`check_html_for_wechat(html_content: str) -> dict`**
+- 输入：HTML 内容
+- 输出：检查结果摘要，包含 `is_valid`、`compression_ratio`、`warnings` 统计
+- 作用：检查 HTML 是否适合微信公众号
+
+---
+
+### 4.2 评论管理工具【新增】
+
+**`open_comment(msg_data_id: int, index: int = 0) -> dict`**
+- 打开已群发文章留言功能
+
+**`close_comment(msg_data_id: int, index: int = 0) -> dict`**
+- 关闭已群发文章留言功能
+
+**`get_comment_list(msg_data_id: int, index: int = 0, comment_type: int = 0) -> dict`**
+- 查看指定文章的留言数据（comment_type: 0=普通, 1=精选）
+
+**`mark_elect_comment(msg_data_id: int, index: int, user_comment_id: int) -> dict`**
+- 将留言标记为精选
+
+**`reply_comment(msg_data_id: int, index: int, user_comment_id: int, content: str) -> dict`**
+- 回复留言（最多300字符）
+
+---
+
 ### 5. 草稿工具
 
 **`create_draft(articles: list, auto_upload_thumb: bool = False) -> dict`**

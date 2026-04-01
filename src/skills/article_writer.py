@@ -465,6 +465,48 @@ class ArticleWriterSkill:
                 return default
         return v if v else default
 
+    def _get_contrast_color(self, hex_color: str) -> str:
+        """
+        根据背景色返回对比色（黑色或白色），使用 YIQ 亮度公式
+        
+        Args:
+            hex_color: 十六进制颜色值，如 '#ec4899'
+            
+        Returns:
+            '#000000' (黑色) 或 '#ffffff' (白色)
+        """
+        hex_color = hex_color.lstrip('#')
+        try:
+            r = int(hex_color[0:2], 16)
+            g = int(hex_color[2:4], 16)
+            b = int(hex_color[4:6], 16)
+        except (ValueError, IndexError):
+            return "#000000"
+        
+        yiq = (r * 299 + g * 587 + b * 114) / 1000
+        return "#000000" if yiq > 128 else "#ffffff"
+
+    def _hex_to_rgba(self, hex_color: str, alpha: float) -> str:
+        """
+        将十六进制颜色转换为 RGBA 字符串
+        
+        Args:
+            hex_color: 十六进制颜色值
+            alpha: 透明度，0.0 - 1.0
+            
+        Returns:
+            RGBA 字符串，如 'rgba(236, 72, 153, 0.1)'
+        """
+        hex_color = hex_color.lstrip('#')
+        try:
+            r = int(hex_color[0:2], 16)
+            g = int(hex_color[2:4], 16)
+            b = int(hex_color[4:6], 16)
+        except (ValueError, IndexError):
+            return f"rgba(0, 0, 0, {alpha})"
+        
+        return f"rgba({r}, {g}, {b}, {alpha})"
+
     def _remove_mixed_language_spaces(self, html: str) -> str:
         """Remove unnecessary spaces between Chinese and English/punctuation characters in HTML.
 
@@ -780,14 +822,27 @@ class ArticleWriterSkill:
                 elif line.startswith('## '):
                     flush_ul()
                     flush_ol()
-                    h2_bg_style = f"background-color:{h2_bg};display:block;" if h2_bg else ""
-                    h2_pad_style = f"padding:{h2_pad};" if h2_pad else ("padding:3px 10px;" if h2_bg else "padding-left:10px;")
-                    html.append(
-                        f'<h2 style="font-size:{h2_fs};font-weight:bold;'
-                        f'{h2_bg_style}color:{h2_color};margin:{h2_mgn};line-height:1.4;'
-                        f'border-left:10px solid {h2_sec};{h2_pad_style}">'
-                        f'{self._escape_user_html(line[3:])}</h2>'
-                    )
+                    h2_style = self._gv(cfg, "h2", "style", default="default")  # 'default' or 'pill'
+                    
+                    if h2_style == "pill":
+                        # 圆角色块样式（从 wechat-allauto-gzh 借鉴）
+                        text_color = self._get_contrast_color(h2_bg) if h2_bg else "#ffffff"
+                        html.append(
+                            f'<h2 style="display:inline-block;background-color:{h2_bg or primary};'
+                            f'color:{text_color};padding:6px 16px;border-radius:20px;'
+                            f'font-size:{h2_fs};font-weight:bold;margin:{h2_mgn};line-height:1.4;letter-spacing:1px;">'
+                            f'{self._escape_user_html(line[3:])}</h2>'
+                        )
+                    else:
+                        # 默认样式：左侧竖线
+                        h2_bg_style = f"background-color:{h2_bg};display:block;" if h2_bg else ""
+                        h2_pad_style = f"padding:{h2_pad};" if h2_pad else ("padding:3px 10px;" if h2_bg else "padding-left:10px;")
+                        html.append(
+                            f'<h2 style="font-size:{h2_fs};font-weight:bold;'
+                            f'{h2_bg_style}color:{h2_color};margin:{h2_mgn};line-height:1.4;'
+                            f'border-left:10px solid {h2_sec};{h2_pad_style}">'
+                            f'{self._escape_user_html(line[3:])}</h2>'
+                        )
                 elif line.startswith('### '):
                     flush_ul()
                     flush_ol()
