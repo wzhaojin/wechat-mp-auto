@@ -128,14 +128,15 @@ class ContentOptimizer:
     
     def _add_emotion_words(self, text: str) -> str:
         """添加情感增强词，保护 Markdown 格式"""
-        # Step 1: 保护 Markdown 标题行（# 开头或 ## 开头的行）
-        protected_lines = []
+        # Step 1: 保护 Markdown 标题行及其后的整个段落块
+        protected_blocks = []
         
-        def protect_line(m):
-            protected_lines.append(m.group(0))
-            return f'\x00PROTECTED_LINE_{len(protected_lines)-1}\x00'
+        def protect_block(m):
+            protected_blocks.append(m.group(0))
+            return f'\x00PROTECTED_BLOCK_{len(protected_blocks)-1}\x00'
         
-        text = re.sub(r'^#{1,6} .+$', protect_line, text, flags=re.MULTILINE)
+        # 保护所有标题行及其紧跟的段落内容
+        text = re.sub(r'^(#{1,6} .+)(?:\n[^#]+)*', protect_block, text, flags=re.MULTILINE)
         
         # Step 2: 分割句子并添加情感词
         sentences = re.split(r'([。！？.!?])', text)
@@ -149,7 +150,7 @@ class ContentOptimizer:
             # 随机添加情感词（仅在非保护行）
             if random.random() < 0.15 * self.config.intensity and sentence.strip():
                 # 跳过标题行和 Markdown 特殊行
-                if not sentence.startswith('\x00PROTECTED_LINE'):
+                if not sentence.startswith('\x00PROTECTED_BLOCK'):
                     emotion_type = random.choice(list(self.EMOTION_WORDS.keys()))
                     emotion_word = random.choice(self.EMOTION_WORDS[emotion_type])
                     sentence = emotion_word + "，" + sentence.lstrip()
@@ -158,9 +159,9 @@ class ContentOptimizer:
         
         text = ''.join(result)
         
-        # Step 3: 恢复保护行
-        for i, line in enumerate(protected_lines):
-            text = text.replace(f'\x00PROTECTED_LINE_{i}\x00', line)
+        # Step 3: 恢复保护块
+        for i, block in enumerate(protected_blocks):
+            text = text.replace(f'\x00PROTECTED_BLOCK_{i}\x00', block)
         
         return text
     
@@ -168,17 +169,18 @@ class ContentOptimizer:
         """添加个人化视角，保护 Markdown 格式"""
         personal_phrases = [
             "我觉得", "我个人认为", "以我的经验",
-            "从我的角度来看", "说实话", "不得不说"
+            "从我的角度来看", "说实话", "不得不 说"
         ]
         
-        # Step 1: 保护 Markdown 标题行
-        protected_lines = []
+        # Step 1: 保护 Markdown 标题行及其后的整个段落块
+        protected_blocks = []
         
-        def protect_line(m):
-            protected_lines.append(m.group(0))
-            return f'\x00PROTECTED_LINE_{len(protected_lines)-1}\x00'
+        def protect_block(m):
+            protected_blocks.append(m.group(0))
+            return f'\x00PROTECTED_BLOCK_{len(protected_blocks)-1}\x00'
         
-        text = re.sub(r'^#{1,6} .+$', protect_line, text, flags=re.MULTILINE)
+        # 保护所有标题行及其紧跟的段落内容
+        text = re.sub(r'^(#{1,6} .+)(?:\n[^#]+)*', protect_block, text, flags=re.MULTILINE)
         
         # Step 2: 分割句子并添加个人视角
         sentences = re.split(r'([。！？.!?])', text)
@@ -191,7 +193,7 @@ class ContentOptimizer:
             
             # 在某些句子开头添加个人视角（跳过保护行）
             if random.random() < 0.08 * self.config.intensity and len(sentence) > 10:
-                if not sentence.startswith('\x00PROTECTED_LINE'):
+                if not sentence.startswith('\x00PROTECTED_BLOCK'):
                     phrase = random.choice(personal_phrases)
                     sentence = phrase + "，" + sentence.lstrip()
             
@@ -199,9 +201,9 @@ class ContentOptimizer:
         
         text = ''.join(result)
         
-        # Step 3: 恢复保护行
-        for i, line in enumerate(protected_lines):
-            text = text.replace(f'\x00PROTECTED_LINE_{i}\x00', line)
+        # Step 3: 恢复保护块
+        for i, block in enumerate(protected_blocks):
+            text = text.replace(f'\x00PROTECTED_BLOCK_{i}\x00', block)
         
         return text
     

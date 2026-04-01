@@ -49,6 +49,7 @@ styles:
     text_align: "center"
     color: "#7c3aed"
   h2:
+    style: "pill"
     font_size: "20.8px"
     font_weight: "bold"
     margin: "0 0 6px 0"

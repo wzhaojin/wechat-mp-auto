@@ -53,6 +53,8 @@ styles:
     text_align: "center"
     color: "#3b82f6"
   h2:
+    style: "pill"
+    style: "pill"  # pill(圆角色块) 或 default(左侧竖线)
     font_size: "20.8px"
     font_weight: "bold"
     margin: "0 0 6px 0"
