@@ -592,9 +592,35 @@ class ArticleWriterSkill:
         # 注意：不再删除 img 标签（之前这行会把所有 <img> 替换为空格，导致图片丢失）
 
         # Step 2: Remove unwanted spaces
-        # 注意：排除 - (破折号)，保留 "A - 中文" 或 "中文 - A" 中的空格
-        html = re.sub(r'([\u4e00-\u9fff]) +([^\s])', r'\1\2', html)
-        html = re.sub(r'([^\s\u4e00-\u9fff-]) +([\u4e00-\u9fff])', r'\1\2', html)
+        # 只删除真正的混排空格，不影响正常的编号格式和破折号
+        # 
+        # 规则1：删除"中文 英文"中的空格（中文后直接跟英文单词）
+        html = re.sub(r'([\u4e00-\u9fff])([a-zA-Z])', r'\1\2', html)
+        # 规则2：删除"英文词 中文"中的空格（英文单词后直接跟中文）
+        # 但排除 "1. 中文"、"a) 中文"、"- 中文" 等编号格式
+        # 匹配 "单词 中文" 或 "缩写 中文"，其中单词=连续的非符号非空格字符
+        def remove_space_before_chinese(m):
+            prefix = m.group(1)
+            chinese = m.group(2)
+            # 如果 prefix 末尾是 . ) ] 等编号符号，不处理
+            if prefix and prefix[-1] in '.):]':
+                return m.group(0)  # 保留原样
+            # 如果 prefix 是单个字母或常见缩写如 AI GPT 等，不处理
+            if len(prefix) <= 4 and prefix.isupper() and prefix.isalpha():
+                return m.group(0)  # 保留如 "AI 中文" 中的空格
+            return prefix + chinese
+        
+        html = re.sub(r'([a-zA-Z]+)([\u4e00-\u9fff])', remove_space_before_chinese, html)
+        # 规则3：删除"数字 中文"中的空格，但排除 "1. 中文" 格式
+        def remove_space_after_number(m):
+            num_part = m.group(1)
+            chinese = m.group(2)
+            # 如果前面是 . 结尾的编号格式，不处理
+            if num_part.endswith('.'):
+                return m.group(0)
+            return num_part + chinese
+        
+        html = re.sub(r'([0-9]+)([\u4e00-\u9fff])', remove_space_after_number, html)
 
         # Step 3: Restore tags
         for i, tag_html in enumerate(protected):
