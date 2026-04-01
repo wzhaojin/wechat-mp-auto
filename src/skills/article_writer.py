@@ -663,7 +663,7 @@ class ArticleWriterSkill:
                 # Match if h2 content contains section title (substring match)
                 if norm_key in normalized_h2:
                     return (
-                        f'<img src="{image_url}" alt="{orig_key}" style="max-width:100%;margin:16px 0;">\n'
+                        f'<img src="{image_url}" alt="{orig_key}" referrerpolicy="no-referrer" style="max-width:100%;height:auto;display:block;margin:20px auto;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);">\n'
                         f'{h2_open}{h2_text}{h2_close}'
                     )
             return h2_full
@@ -814,7 +814,7 @@ class ArticleWriterSkill:
                 if line == '---':
                     flush_ul()
                     flush_ol()
-                    html.append('<hr style="border:none;border-top:1px solid #e8e8e8;margin:24px 0;">')
+                    html.append('<hr style="border:none;border-top:2px dashed #e0e0e0;margin:32px 0;">')
                     i += 1
                     continue
 
@@ -822,43 +822,63 @@ class ArticleWriterSkill:
                 if raw_line.startswith('    ') or raw_line.startswith('\t'):
                     flush_ul()
                     flush_ol()
-                    # 收集所有缩进行
-                    code_lines = [line]
-                    i += 1
-                    while i < len(lines) and (lines[i].startswith('    ') or lines[i].startswith('\t') or lines[i].strip() == ''):
-                        code_lines.append(lines[i].strip())
-                        i += 1
+                    # 缩进代码块 - 苹果风格
                     code_content = '\n'.join(code_lines)
                     code_content = code_content.replace("<", "&lt;").replace(">", "&gt;")
+                    apple_style = f"margin:16px 0;max-width:100%;box-sizing:border-box;background:#1e1e1e;border-radius:12px;overflow:hidden;font-family:'SF Mono','Fira Code',Menlo,Monaco,monospace;"
+                    header_style = "padding:12px 16px;background:#2d2d2d;border-bottom:1px solid #3d3d3d;display:flex;align-items:center;gap:8px;"
+                    dot_style = "width:12px;height:12px;border-radius:50%;"
+                    code_style = "display:block;padding:16px;overflow-x:auto;font-size:13px;line-height:1.6;color:#d4d4d4;"
                     html.append(
-                        f'<pre style="background:#f5f5f5;padding:12px 16px;border-radius:8px;'
-                        f'overflow-x:auto;font-family:monospace;font-size:13px;margin:16px 0;'
-                        f'line-height:1.6;border:1px solid #e8e8e8;">'
-                        f'<code>{code_content}</code></pre>'
+                        f'<section style="margin:16px 0;max-width:100%;box-sizing:border-box;">'
+                        f'<div style="{apple_style}">'
+                        f'<div style="{header_style}">'
+                        f'<div style="{dot_style}background:#ff5f56;"></div>'
+                        f'<div style="{dot_style}background:#ffbd2e;"></div>'
+                        f'<div style="{dot_style}background:#27c93f;"></div>'
+                        f'<span style="margin-left:auto;font-size:11px;color:#888;text-transform:uppercase;">code</span>'
+                        f'</div>'
+                        f'<pre style="{code_style}margin:0;"><code>{code_content}</code></pre>'
+                        f'</div></section>'
                     )
                     continue
 
-                # 代码块（``` 形式）
+                # 代码块（``` 形式）- 苹果风格
                 if line.startswith('```'):
                     flush_ul()
                     flush_ol()
                     code_lines = []
+                    lang = ''
                     i += 1
+                    if i < len(lines) and lines[i].strip() and not lines[i].strip().startswith('```'):
+                        lang = lines[i].strip()
+                        i += 1
                     while i < len(lines) and not lines[i].strip().startswith('```'):
                         code_lines.append(lines[i])
                         i += 1
                     code_content = '\n'.join(code_lines)
                     code_content = code_content.replace("<", "&lt;").replace(">", "&gt;")
+                    # 苹果风格代码块
+                    apple_style = f"margin:16px 0;max-width:100%;box-sizing:border-box;background:#1e1e1e;border-radius:12px;overflow:hidden;font-family:'SF Mono','Fira Code',Menlo,Monaco,monospace;"
+                    header_style = "padding:12px 16px;background:#2d2d2d;border-bottom:1px solid #3d3d3d;display:flex;align-items:center;gap:8px;"
+                    dot_style = "width:12px;height:12px;border-radius:50%;"
+                    code_style = "display:block;padding:16px;overflow-x:auto;font-size:13px;line-height:1.6;color:#d4d4d4;"
                     html.append(
-                        f'<pre style="background:#f5f5f5;padding:12px 16px;border-radius:8px;'
-                        f'overflow-x:auto;font-family:monospace;font-size:13px;margin:16px 0;'
-                        f'line-height:1.6;border:1px solid #e8e8e8;">'
-                        f'<code>{code_content}</code></pre>'
+                        f'<section style="margin:16px 0;max-width:100%;box-sizing:border-box;">'
+                        f'<div style="{apple_style}">'
+                        f'<div style="{header_style}">'
+                        f'<div style="{dot_style}background:#ff5f56;"></div>'
+                        f'<div style="{dot_style}background:#ffbd2e;"></div>'
+                        f'<div style="{dot_style}background:#27c93f;"></div>'
+                        f'<span style="margin-left:auto;font-size:11px;color:#888;text-transform:uppercase;">{lang or "code"}</span>'
+                        f'</div>'
+                        f'<pre style="{code_style}margin:0;"><code>{code_content}</code></pre>'
+                        f'</div></section>'
                     )
                     i += 1
                     continue
 
-                # 引用块
+                # 引用块 - 优雅样式
                 if line.startswith('>'):
                     flush_ul()
                     flush_ol()
@@ -874,11 +894,14 @@ class ArticleWriterSkill:
                         f'<blockquote style="'
                         f'{bq_bl_style}'
                         f'background:{bq_bg};'
-                        f'padding:{bq_pad};'
-                        f'margin:{bq_mgn};'
+                        f'padding:16px 20px;'
+                        f'margin:20px 0;'
                         f'color:{bq_color};'
+                        f'font-size:14px;'
+                        f'line-height:1.8;'
                         f'font-style:italic;'
-                        f'border-radius:0 4px 4px 0;">'
+                        f'border-radius:0 8px 8px 0;'
+                        f'box-shadow:0 2px 8px rgba(0,0,0,0.06);">'
                         f'{quote_content}</blockquote>'
                     )
                     continue
@@ -909,12 +932,12 @@ class ArticleWriterSkill:
                     h2_style = self._gv(cfg, "h2", "style", default="default")  # 'default' or 'pill'
                     
                     if h2_style == "pill":
-                        # 圆角色块样式（从 wechat-allauto-gzh 借鉴）
+                        # 圆角色块样式（铺满整行）
                         text_color = self._get_contrast_color(h2_bg) if h2_bg else "#ffffff"
                         html.append(
-                            f'<h2 style="display:inline-block;background-color:{h2_bg or primary};'
-                            f'color:{text_color};padding:6px 16px;border-radius:20px;'
-                            f'font-size:{h2_fs};font-weight:bold;margin:{h2_mgn};line-height:1.4;letter-spacing:1px;">'
+                            f'<h2 style="display:block;width:100%;box-sizing:border-box;background-color:{h2_bg or primary};'
+                            f'color:{text_color};padding:10px 16px;border-radius:8px;'
+                            f'font-size:{h2_fs};font-weight:bold;margin:{h2_mgn};line-height:1.4;letter-spacing:1px;text-align:left;">'
                             f'{self._escape_user_html(line[3:])}</h2>'
                         )
                     else:
@@ -972,7 +995,8 @@ class ArticleWriterSkill:
                         alt_esc = self._escape_user_html(alt) if alt else ''
                         html.append(
                             f'<img src="{url}" alt="{alt_esc}" '
-                            f'style="max-width:100%;margin:16px 0;">'
+                            f'style="max-width:100%;height:auto;display:block;margin:20px auto;'
+                            f'border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);">'
                         )
                     i += 1
                     continue
@@ -1055,7 +1079,7 @@ class ArticleWriterSkill:
         text = re.sub(r'(src|href)="([^"]+)"', protect_url, text)
 
         # 1. 处理 markdown 图片 ![alt](url) -> <img src="url" alt="alt" />
-        text = re.sub(r'!\[([^\]]*)\]\(([^)]+)\)', r'<img src="\2" alt="\1" style="max-width:100%;margin:16px 0;" />', text)
+        text = re.sub(r'!\[([^\]]*)\]\(([^)]+)\)', r'<img src="\2" alt="\1" referrerpolicy="no-referrer" style="max-width:100%;height:auto;display:block;margin:20px auto;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);" />', text)
 
         # 2. 链接 [text](url)
         text = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', r'<a href="\2" style="color:#007AFF;text-decoration:none;">\1</a>', text)
