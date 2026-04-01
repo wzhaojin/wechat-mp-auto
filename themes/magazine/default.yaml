@@ -1,0 +1,26 @@
+name: "经典画报"
+description: "黑白极简，大字号，适合图文并茂的深度阅读"
+keywords: ["杂志", "极简", "黑白", "高级"]
+colors:
+  primary: "#111111"
+styles:
+  body:
+    font_size: "16px"
+    color: "#222222"
+    line_height: "2.0"
+    letter_spacing: "0.5px"
+  h1:
+    font_size: "26px"
+    font_weight: "900"
+    text_align: "center"
+    margin: "30px 0"
+    letter_spacing: "2px"
+  strong:
+    font_weight: "900"
+    color: "#000000"
+    background_color: "#f0f0f0"
+    padding: "0 4px"
+  link:
+    color: "#111111"
+    text_decoration: "underline"
+    font_weight: "bold"

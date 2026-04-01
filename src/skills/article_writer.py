@@ -445,13 +445,70 @@ class ArticleWriterSkill:
         return table_html, i
 
     def _read_theme(self, theme: str) -> dict:
-        """读取并解析 theme YAML，返回扁平化配置字典"""
+        """
+        读取并解析 theme YAML，返回扁平化配置字典
+        支持新旧两种格式：
+        - 新格式（多级目录）：themes/macaron/blue.yaml -> category=macaron, name=blue
+        - 旧格式（扁平）：themes/default.yaml -> 直接读取
+        新格式自动展平为 article_writer 兼容的结构
+        """
         import yaml
-        theme_file = self._themes_dir / f"{theme}.yaml"
-        if theme_file.exists():
-            with open(theme_file) as f:
-                return yaml.safe_load(f) or {}
+        
+        # 尝试多种路径格式
+        possible_paths = []
+        
+        # 1. 新格式：category/name -> themes/category/name.yaml
+        if '/' in theme:
+            possible_paths.append(self._themes_dir / (theme.replace('/', '.yaml') + '.yaml'))
+        
+        # 2. 新格式：themes/category/name.yaml
+        possible_paths.append(self._themes_dir / theme.replace('/', '/') / (theme.split('/')[-1] + '.yaml'))
+        
+        # 3. 旧格式：直接 themes/name.yaml
+        possible_paths.append(self._themes_dir / f"{theme}.yaml")
+        
+        # 4. 新格式：themes/category/name.yaml（分类目录）
+        if '/' in theme:
+            category, name = theme.split('/', 1)
+            possible_paths.append(self._themes_dir / category / f"{name}.yaml")
+        
+        for theme_file in possible_paths:
+            if theme_file.exists():
+                with open(theme_file) as f:
+                    cfg = yaml.safe_load(f) or {}
+                
+                # 检测格式并转换
+                if 'styles' in cfg:
+                    # 新格式：将 styles.xxx 展平到根级别
+                    cfg = self._normalize_theme_format(cfg)
+                
+                return cfg
+        
         return {}
+
+    def _normalize_theme_format(self, cfg: dict) -> dict:
+        """
+        将新格式 YAML 配置展平为 article_writer 兼容的格式
+        新格式: { colors: {...}, styles: { body: {...}, h1: {...}, ... } }
+        转换后: { colors: {...}, body: {...}, h1: {...}, ... }
+        """
+        result = {}
+        
+        # 复制 colors（如果存在）
+        if 'colors' in cfg:
+            result['colors'] = cfg['colors']
+        
+        # 展平 styles 到根级别
+        if 'styles' in cfg:
+            for key, value in cfg['styles'].items():
+                result[key] = value
+        
+        # 保留 name, description 等元数据
+        for key in ['name', 'description', 'keywords', 'category']:
+            if key in cfg:
+                result[key] = cfg[key]
+        
+        return result
 
     def _gv(self, d: dict, *keys, default: str = "") -> str:
         """安全获取嵌套字典值，避免 None"""

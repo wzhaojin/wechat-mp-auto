@@ -1,0 +1,10 @@
+name: "产品发布卡片"
+description: "支持高级组件：使用 ::: release 和 ::: grid 语法调用"
+keywords: ["高级", "组件", "卡片", "产品发布"]
+colors:
+  primary: "#c25e3a" # 陶土红
+styles:
+  body:
+    font_size: "15px"
+    color: "#444444"
+    line_height: "1.8"

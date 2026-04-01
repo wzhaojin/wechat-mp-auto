@@ -1,0 +1,134 @@
+# ============================================================
+# 马卡龙天空主题 (Macaron Sky)
+# ============================================================
+# 特点：清新明亮的马卡龙天空色系，柔和低饱和度配色
+# 适用：旅行、自由、梦想、开阔类文章
+# 风格：清新、明亮、自由、开阔
+# ============================================================
+
+name: 马卡龙天空
+description: 清新明亮的马卡龙天空色系，柔和低饱和度，适合旅行、自由、梦想类文章
+keywords:
+  - 旅行
+  - 自由
+  - 梦想
+  - 天空
+  - 飞行
+  - 希望
+  - 开阔
+  - 蓝天
+  - 云朵
+  - 自由感
+  - 梦想家
+  - 旅行者
+
+colors:
+  primary: "#38bdf8"      # 主色调：马卡龙天空蓝
+  accent: "#e0f2fe"       # 强调色：浅天空背景
+  text: "#0f172a"         # 主文字：深 slate
+  text_light: "#64748b"   # 次要文字：灰蓝色
+  background: "#ffffff"   # 背景色：纯白
+  blockquote_bg: "#f0f9ff" # 引用块背景：极浅天空
+  code_bg: "#f0f9ff"      # 代码背景：极浅天空
+  table_border: "#bae6fd" # 表格边框：浅天空
+  table_header_bg: "#e0f2fe" # 表头背景：浅天空
+
+styles:
+  body:
+    font_size: "16px"
+    line_height: "1.75"
+    letter_spacing: "0px"
+    padding: "0 16px"
+    margin: "0 0 10px 0"
+    color: "#0f172a"
+    background_color: "#ffffff"
+  h1:
+    font_size: "24px"
+    font_weight: "normal"
+    margin: "0 0 8px 0"
+    padding: "0 16px"
+    text_align: "center"
+    color: "#38bdf8"
+  h2:
+    font_size: "20.8px"
+    font_weight: "bold"
+    margin: "0 0 6px 0"
+    padding: "0 16px"
+    color: "#0f172a"
+  h3:
+    font_size: "20.8px"
+    font_weight: "bold"
+    margin: "0 0 4px 0"
+    padding: "0 16px"
+    color: "#0f172a"
+  h4:
+    font_size: "19.2px"
+    font_weight: "bold"
+    margin: "0 0 4px 0"
+    padding: "0 16px"
+    color: "#64748b"
+  blockquote:
+    font_size: "14.4px"
+    padding: "8px 10px"
+    margin: "16px 0"
+    border_left: "4px solid #38bdf8"
+    background: "#f0f9ff"
+    border_radius: "0 5px 5px 0"
+    line_height: "1.75"
+    color: "#0f172a"
+  code_inline:
+    font_size: "12.5px"
+    padding: "4px 6px"
+    border_radius: "3px"
+    background: "#f0f9ff"
+    color: "#38bdf8"
+  code_block:
+    font_size: "14px"
+    line_height: "2"
+    margin: "10px 4px"
+    padding: "8px"
+    border_radius: "5px"
+    background: "#f0f9ff"
+    color: "#0f172a"
+  list:
+    font_size: "16px"
+    margin: "10px 0"
+    padding: "0 16px 0 32px"
+    line_height: "1.75"
+    color: "#0f172a"
+  separator:
+    border_top: "1px solid #ddd"
+    margin: "20px auto"
+  image:
+    border_radius: "8px"
+    box_shadow: "0 2px 8px rgba(0, 0, 0, 0.08)"
+  link:
+    color: "#38bdf8"
+    text_decoration: "underline"
+  strong:
+    font_weight: "bold"
+    color: "#38bdf8"
+  table:
+    font_size: "12px"
+    border_collapse: "collapse"
+    width: "100%"
+    margin: "10px 0"
+  table_th:
+    padding: "9px 12px"
+    line_height: "22px"
+    font_weight: "bold"
+    background: "#e0f2fe"
+    color: "#0f172a"
+    border: "1px solid #bae6fd"
+  table_td:
+    padding: "9px 12px"
+    line_height: "22px"
+    color: "#0f172a"
+    border: "1px solid #bae6fd"
+  module_title:
+    font_size: "20.8px"
+    font_weight: "bold"
+    color: "#38bdf8"
+    margin: "0 0 6px 0"
+    padding: "0 16px"
+    text_align: "center"

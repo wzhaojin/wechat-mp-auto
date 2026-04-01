@@ -1,0 +1,137 @@
+# ============================================================
+# 马卡龙薄荷主题 (Macaron Mint)
+# ============================================================
+# 特点：清新自然的马卡龙薄荷色系，柔和低饱和度配色
+# 适用：健康、环保、生活方式、自然类文章
+# 风格：清新、健康、自然、活力
+# ============================================================
+
+name: 马卡龙薄荷
+description: 清新自然的马卡龙薄荷色系，柔和低饱和度，适合健康、环保、生活方式类文章
+keywords:
+  - 健康
+  - 环保
+  - 自然
+  - 生活
+  - 清新
+  - 绿色
+  - 薄荷
+  - 运动
+  - 健身
+  - 饮食
+  - 有机
+  - 可持续
+  - 植物
+  - 养生
+  - 活力
+
+colors:
+  primary: "#14b8a6"      # 主色调：马卡龙薄荷
+  accent: "#ccfbf1"       # 强调色：浅薄荷背景
+  text: "#0f172a"         # 主文字：深 slate
+  text_light: "#64748b"   # 次要文字：灰蓝色
+  background: "#ffffff"   # 背景色：纯白
+  blockquote_bg: "#f0fdfa" # 引用块背景：极浅薄荷
+  code_bg: "#f0fdfa"      # 代码背景：极浅薄荷
+  table_border: "#99f6e4" # 表格边框：浅薄荷
+  table_header_bg: "#ccfbf1" # 表头背景：浅薄荷
+
+styles:
+  body:
+    font_size: "16px"
+    line_height: "1.75"
+    letter_spacing: "0px"
+    padding: "0 16px"
+    margin: "0 0 10px 0"
+    color: "#0f172a"
+    background_color: "#ffffff"
+  h1:
+    font_size: "24px"
+    font_weight: "normal"
+    margin: "0 0 8px 0"
+    padding: "0 16px"
+    text_align: "center"
+    color: "#14b8a6"
+  h2:
+    font_size: "20.8px"
+    font_weight: "bold"
+    margin: "0 0 6px 0"
+    padding: "0 16px"
+    color: "#0f172a"
+  h3:
+    font_size: "20.8px"
+    font_weight: "bold"
+    margin: "0 0 4px 0"
+    padding: "0 16px"
+    color: "#0f172a"
+  h4:
+    font_size: "19.2px"
+    font_weight: "bold"
+    margin: "0 0 4px 0"
+    padding: "0 16px"
+    color: "#64748b"
+  blockquote:
+    font_size: "14.4px"
+    padding: "8px 10px"
+    margin: "16px 0"
+    border_left: "4px solid #14b8a6"
+    background: "#f0fdfa"
+    border_radius: "0 5px 5px 0"
+    line_height: "1.75"
+    color: "#0f172a"
+  code_inline:
+    font_size: "12.5px"
+    padding: "4px 6px"
+    border_radius: "3px"
+    background: "#f0fdfa"
+    color: "#14b8a6"
+  code_block:
+    font_size: "14px"
+    line_height: "2"
+    margin: "10px 4px"
+    padding: "8px"
+    border_radius: "5px"
+    background: "#f0fdfa"
+    color: "#0f172a"
+  list:
+    font_size: "16px"
+    margin: "10px 0"
+    padding: "0 16px 0 32px"
+    line_height: "1.75"
+    color: "#0f172a"
+  separator:
+    border_top: "1px solid #ddd"
+    margin: "20px auto"
+  image:
+    border_radius: "8px"
+    box_shadow: "0 2px 8px rgba(0, 0, 0, 0.08)"
+  link:
+    color: "#14b8a6"
+    text_decoration: "underline"
+  strong:
+    font_weight: "bold"
+    color: "#14b8a6"
+  table:
+    font_size: "12px"
+    border_collapse: "collapse"
+    width: "100%"
+    margin: "10px 0"
+  table_th:
+    padding: "9px 12px"
+    line_height: "22px"
+    font_weight: "bold"
+    background: "#ccfbf1"
+    color: "#0f172a"
+    border: "1px solid #99f6e4"
+  table_td:
+    padding: "9px 12px"
+    line_height: "22px"
+    color: "#0f172a"
+    border: "1px solid #99f6e4"
+  module_title:
+    font_size: "20.8px"
+    font_weight: "bold"
+    color: "#14b8a6"
+    margin: "0 0 6px 0"
+    padding: "0 16px"
+    text_align: "center"

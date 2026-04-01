@@ -1,0 +1,133 @@
+# ============================================================
+# 文颜紫色主题 (Wenyan Purple)
+# ============================================================
+# 特点：微微紫点缀，简约优雅，适合文艺、设计、女性类文章
+# 适用：文艺、设计、女性、优雅、浪漫、艺术、情感
+# 风格：简约、优雅、紫色、浪漫
+# 来源：文颜(Wenyan)内置主题移植
+# ============================================================
+
+name: 文颜紫色
+description: 微微紫点缀，简约优雅风格，适合文艺、设计、女性类文章
+keywords:
+  - 紫色
+  - 优雅
+  - 文艺
+  - 设计
+  - 女性
+  - 浪漫
+  - 艺术
+  - 情感
+  - 简约
+  - 精致
+
+colors:
+  primary: "#8b5cf6"      # 主色调：紫罗兰
+  accent: "#ede9fe"       # 强调色：浅紫背景
+  text: "#1e1b4b"         # 主文字：深紫黑
+  text_light: "#7c3aed"   # 次要文字：紫
+  background: "#ffffff"   # 背景色：纯白
+  blockquote_bg: "#faf5ff" # 引用块背景：极浅紫
+  code_bg: "#f5f3ff"      # 代码背景：极浅紫
+  table_border: "#ddd6fe" # 表格边框：浅紫
+  table_header_bg: "#ede9fe" # 表头背景：浅紫
+
+styles:
+  body:
+    font_size: "16px"
+    line_height: "1.75"
+    letter_spacing: "0px"
+    padding: "0 16px"
+    margin: "0 0 10px 0"
+    color: "#1e1b4b"
+    background_color: "#ffffff"
+  h1:
+    font_size: "24px"
+    font_weight: "normal"
+    margin: "0 0 8px 0"
+    padding: "0 16px"
+    text_align: "center"
+    color: "#7c3aed"
+  h2:
+    font_size: "20.8px"
+    font_weight: "bold"
+    margin: "0 0 6px 0"
+    padding: "0 16px"
+    color: "#1e1b4b"
+  h3:
+    font_size: "20.8px"
+    font_weight: "bold"
+    margin: "0 0 4px 0"
+    padding: "0 16px"
+    color: "#6d28d9"
+  h4:
+    font_size: "19.2px"
+    font_weight: "bold"
+    margin: "0 0 4px 0"
+    padding: "0 16px"
+    color: "#7c3aed"
+  blockquote:
+    font_size: "14.4px"
+    padding: "8px 10px"
+    margin: "16px 0"
+    border_left: "4px solid #8b5cf6"
+    background: "#faf5ff"
+    border_radius: "0 5px 5px 0"
+    line_height: "1.75"
+    color: "#4c1d95"
+  code_inline:
+    font_size: "12.5px"
+    padding: "4px 6px"
+    border_radius: "3px"
+    background: "#ede9fe"
+    color: "#7c3aed"
+  code_block:
+    font_size: "14px"
+    line_height: "2"
+    margin: "10px 4px"
+    padding: "8px"
+    border_radius: "5px"
+    background: "#faf5ff"
+    color: "#1e1b4b"
+  list:
+    font_size: "16px"
+    margin: "10px 0"
+    padding: "0 16px 0 32px"
+    line_height: "1.75"
+    color: "#1e1b4b"
+  separator:
+    border_top: "1px solid #ddd"
+    margin: "20px auto"
+  image:
+    border_radius: "8px"
+    box_shadow: "0 2px 8px rgba(0, 0, 0, 0.08)"
+  link:
+    color: "#7c3aed"
+    text_decoration: "underline"
+  strong:
+    font_weight: "bold"
+    color: "#6d28d9"
+  table:
+    font_size: "12px"
+    border_collapse: "collapse"
+    width: "100%"
+    margin: "10px 0"
+  table_th:
+    padding: "9px 12px"
+    line_height: "22px"
+    font_weight: "bold"
+    background: "#ede9fe"
+    color: "#1e1b4b"
+    border: "1px solid #ddd6fe"
+  table_td:
+    padding: "9px 12px"
+    line_height: "22px"
+    color: "#4c1d95"
+    border: "1px solid #ddd6fe"
+  module_title:
+    font_size: "20.8px"
+    font_weight: "bold"
+    color: "#7c3aed"
+    margin: "0 0 6px 0"
+    padding: "0 16px"
+    text_align: "center"

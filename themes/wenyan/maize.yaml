@@ -1,0 +1,133 @@
+# ============================================================
+# 文颜玉米主题 (Wenyan Maize)
+# ============================================================
+# 特点：柔和玉米色系，明快温暖，适合美食、生活、阳光类文章
+# 适用：美食、生活、阳光、温暖、早安、日记、分享
+# 风格：明快、温暖、柔和、阳光
+# 来源：文颜(Wenyan)内置主题移植
+# ============================================================
+
+name: 文颜玉米
+description: 柔和玉米色系，明快温暖，适合美食、生活、阳光类文章
+keywords:
+  - 玉米
+  - 黄色
+  - 明快
+  - 温暖
+  - 美食
+  - 生活
+  - 阳光
+  - 早安
+  - 日记
+  - 分享
+
+colors:
+  primary: "#f59e0b"      # 主色调：琥珀黄
+  accent: "#fef3c7"       # 强调色：浅黄背景
+  text: "#1c1917"         # 主文字：深棕灰
+  text_light: "#78716c"   # 次要文字：暖灰
+  background: "#ffffff"   # 背景色：纯白
+  blockquote_bg: "#fffbeb" # 引用块背景：极浅黄
+  code_bg: "#fffbeb"      # 代码背景：极浅黄
+  table_border: "#fcd34d" # 表格边框：浅黄
+  table_header_bg: "#fef3c7" # 表头背景：浅黄
+
+styles:
+  body:
+    font_size: "16px"
+    line_height: "1.75"
+    letter_spacing: "0px"
+    padding: "0 16px"
+    margin: "0 0 10px 0"
+    color: "#1c1917"
+    background_color: "#ffffff"
+  h1:
+    font_size: "24px"
+    font_weight: "normal"
+    margin: "0 0 8px 0"
+    padding: "0 16px"
+    text_align: "center"
+    color: "#d97706"
+  h2:
+    font_size: "20.8px"
+    font_weight: "bold"
+    margin: "0 0 6px 0"
+    padding: "0 16px"
+    color: "#1c1917"
+  h3:
+    font_size: "20.8px"
+    font_weight: "bold"
+    margin: "0 0 4px 0"
+    padding: "0 16px"
+    color: "#b45309"
+  h4:
+    font_size: "19.2px"
+    font_weight: "bold"
+    margin: "0 0 4px 0"
+    padding: "0 16px"
+    color: "#78716c"
+  blockquote:
+    font_size: "14.4px"
+    padding: "8px 10px"
+    margin: "16px 0"
+    border_left: "4px solid #fbbf24"
+    background: "#fffbeb"
+    border_radius: "0 5px 5px 0"
+    line_height: "1.75"
+    color: "#44403c"
+  code_inline:
+    font_size: "12.5px"
+    padding: "4px 6px"
+    border_radius: "3px"
+    background: "#fef3c7"
+    color: "#b45309"
+  code_block:
+    font_size: "14px"
+    line_height: "2"
+    margin: "10px 4px"
+    padding: "8px"
+    border_radius: "5px"
+    background: "#fffbeb"
+    color: "#1c1917"
+  list:
+    font_size: "16px"
+    margin: "10px 0"
+    padding: "0 16px 0 32px"
+    line_height: "1.75"
+    color: "#1c1917"
+  separator:
+    border_top: "1px solid #ddd"
+    margin: "20px auto"
+  image:
+    border_radius: "8px"
+    box_shadow: "0 2px 8px rgba(0, 0, 0, 0.08)"
+  link:
+    color: "#d97706"
+    text_decoration: "underline"
+  strong:
+    font_weight: "bold"
+    color: "#b45309"
+  table:
+    font_size: "12px"
+    border_collapse: "collapse"
+    width: "100%"
+    margin: "10px 0"
+  table_th:
+    padding: "9px 12px"
+    line_height: "22px"
+    font_weight: "bold"
+    background: "#fef3c7"
+    color: "#1c1917"
+    border: "1px solid #fcd34d"
+  table_td:
+    padding: "9px 12px"
+    line_height: "22px"
+    color: "#44403c"
+    border: "1px solid #fcd34d"
+  module_title:
+    font_size: "20.8px"
+    font_weight: "bold"
+    color: "#d97706"
+    margin: "0 0 6px 0"
+    padding: "0 16px"
+    text_align: "center"

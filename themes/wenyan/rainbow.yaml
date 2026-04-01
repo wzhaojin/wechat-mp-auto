@@ -1,0 +1,133 @@
+# ============================================================
+# 文颜彩虹主题 (Wenyan Rainbow)
+# ============================================================
+# 特点：色彩丰富但不刺眼，布局简洁，适合多元化内容
+# 适用：综合、多元、创意、艺术、设计类文章
+# 风格：丰富、生动、多彩、创意
+# 来源：文颜(Wenyan)内置主题移植
+# ============================================================
+
+name: 文颜彩虹
+description: 色彩丰富但不刺眼，布局简洁，适合多元化内容创作
+keywords:
+  - 彩虹
+  - 多彩
+  - 创意
+  - 艺术
+  - 设计
+  - 综合
+  - 多元
+  - 生动
+  - 丰富
+  - 靛蓝
+
+colors:
+  primary: "#ef4444"      # 主色调：红
+  accent: "#fef3c7"        # 强调色：浅琥珀
+  text: "#1f2937"          # 主文字：深灰
+  text_light: "#6b7280"    # 次要文字：中灰
+  background: "#ffffff"    # 背景色：纯白
+  blockquote_bg: "#f5f3ff" # 引用块背景：极浅紫
+  code_bg: "#fdf4ff"       # 代码背景：极浅粉
+  table_border: "#e5e7eb"  # 表格边框：浅灰
+  table_header_bg: "#fef3c7" # 表头背景：浅黄
+
+styles:
+  body:
+    font_size: "16px"
+    line_height: "1.75"
+    letter_spacing: "0px"
+    padding: "0 16px"
+    margin: "0 0 10px 0"
+    color: "#1f2937"
+    background_color: "#ffffff"
+  h1:
+    font_size: "24px"
+    font_weight: "normal"
+    margin: "0 0 8px 0"
+    padding: "0 16px"
+    text_align: "center"
+    color: "#e11d48"
+  h2:
+    font_size: "20.8px"
+    font_weight: "bold"
+    margin: "0 0 6px 0"
+    padding: "0 16px"
+    color: "#ea580c"
+  h3:
+    font_size: "20.8px"
+    font_weight: "bold"
+    margin: "0 0 4px 0"
+    padding: "0 16px"
+    color: "#059669"
+  h4:
+    font_size: "19.2px"
+    font_weight: "bold"
+    margin: "0 0 4px 0"
+    padding: "0 16px"
+    color: "#2563eb"
+  blockquote:
+    font_size: "14.4px"
+    padding: "8px 10px"
+    margin: "16px 0"
+    border_left: "4px solid #8b5cf6"
+    background: "#f5f3ff"
+    border_radius: "0 5px 5px 0"
+    line_height: "1.75"
+    color: "#4c1d95"
+  code_inline:
+    font_size: "12.5px"
+    padding: "4px 6px"
+    border_radius: "3px"
+    background: "#fdf4ff"
+    color: "#d946ef"
+  code_block:
+    font_size: "14px"
+    line_height: "2"
+    margin: "10px 4px"
+    padding: "8px"
+    border_radius: "5px"
+    background: "#f8fafc"
+    color: "#1e293b"
+  list:
+    font_size: "16px"
+    margin: "10px 0"
+    padding: "0 16px 0 32px"
+    line_height: "1.75"
+    color: "#1f2937"
+  separator:
+    border_top: "2px dashed #f472b6"
+    margin: "20px auto"
+  image:
+    border_radius: "8px"
+    box_shadow: "0 2px 8px rgba(0, 0, 0, 0.08)"
+  link:
+    color: "#0284c7"
+    text_decoration: "underline"
+  strong:
+    font_weight: "bold"
+    color: "#db2777"
+  table:
+    font_size: "12px"
+    border_collapse: "collapse"
+    width: "100%"
+    margin: "10px 0"
+  table_th:
+    padding: "9px 12px"
+    line_height: "22px"
+    font_weight: "bold"
+    background: "#fef3c7"
+    color: "#b45309"
+    border: "1px solid #fde68a"
+  table_td:
+    padding: "9px 12px"
+    line_height: "22px"
+    color: "#374151"
+    border: "1px solid #e5e7eb"
+  module_title:
+    font_size: "20.8px"
+    font_weight: "bold"
+    color: "#e11d48"
+    margin: "0 0 6px 0"
+    padding: "0 16px"
+    text_align: "center"

@@ -1,0 +1,29 @@
+name: "矩阵绿"
+description: "终端命令行风格，适合硬核技术文章"
+keywords: ["极客", "终端", "代码", "技术"]
+colors:
+  primary: "#10b981" # 荧光绿
+styles:
+  body:
+    font_size: "15px"
+    color: "#334155"
+    line_height: "1.7"
+  h1:
+    font_size: "24px"
+    font_weight: "bold"
+    text_align: "left"
+    margin: "24px 0"
+    color: "#0f172a"
+  strong:
+    font_weight: "bold"
+    color: "#10b981"
+  code_inline:
+    background_color: "#1e293b"
+    color: "#10b981"
+    padding: "2px 6px"
+    border_radius: "4px"
+    font_family: "'Courier New', monospace"
+  link:
+    color: "#10b981"
+    text_decoration: "none"
+    border_bottom: "1px dashed #10b981"

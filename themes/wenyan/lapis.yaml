@@ -1,0 +1,133 @@
+# ============================================================
+# 文颜青金石主题 (Wenyan Lapis)
+# ============================================================
+# 特点：清凉蓝色调，极简清新，适合科技、商务、知识类文章
+# 适用：科技、商务、知识、学术、专业、简洁
+# 风格：清凉、极简、清新、专业
+# 来源：文颜(Wenyan)内置主题移植
+# ============================================================
+
+name: 文颜青金石
+description: 清凉蓝色调，极简清新风格，适合科技、商务、知识类文章
+keywords:
+  - 青金石
+  - 蓝色
+  - 清凉
+  - 极简
+  - 清新
+  - 科技
+  - 商务
+  - 知识
+  - 学术
+  - 专业
+
+colors:
+  primary: "#3b82f6"      # 主色调：天蓝
+  accent: "#dbeafe"       # 强调色：浅蓝背景
+  text: "#0f172a"         # 主文字：深蓝黑
+  text_light: "#64748b"   # 次要文字：灰蓝
+  background: "#ffffff"   # 背景色：纯白
+  blockquote_bg: "#eff6ff" # 引用块背景：极浅蓝
+  code_bg: "#f1f5f9"      # 代码背景：浅灰蓝
+  table_border: "#bfdbfe" # 表格边框：浅蓝
+  table_header_bg: "#dbeafe" # 表头背景：浅蓝
+
+styles:
+  body:
+    font_size: "16px"
+    line_height: "1.75"
+    letter_spacing: "0px"
+    padding: "0 16px"
+    margin: "0 0 10px 0"
+    color: "#0f172a"
+    background_color: "#ffffff"
+  h1:
+    font_size: "24px"
+    font_weight: "normal"
+    margin: "0 0 8px 0"
+    padding: "0 16px"
+    text_align: "center"
+    color: "#1d4ed8"
+  h2:
+    font_size: "20.8px"
+    font_weight: "bold"
+    margin: "0 0 6px 0"
+    padding: "0 16px"
+    color: "#0f172a"
+  h3:
+    font_size: "20.8px"
+    font_weight: "bold"
+    margin: "0 0 4px 0"
+    padding: "0 16px"
+    color: "#1e40af"
+  h4:
+    font_size: "19.2px"
+    font_weight: "bold"
+    margin: "0 0 4px 0"
+    padding: "0 16px"
+    color: "#64748b"
+  blockquote:
+    font_size: "14.4px"
+    padding: "8px 10px"
+    margin: "16px 0"
+    border_left: "4px solid #3b82f6"
+    background: "#eff6ff"
+    border_radius: "0 5px 5px 0"
+    line_height: "1.75"
+    color: "#1e293b"
+  code_inline:
+    font_size: "12.5px"
+    padding: "4px 6px"
+    border_radius: "3px"
+    background: "#dbeafe"
+    color: "#1d4ed8"
+  code_block:
+    font_size: "14px"
+    line_height: "2"
+    margin: "10px 4px"
+    padding: "8px"
+    border_radius: "5px"
+    background: "#f8fafc"
+    color: "#0f172a"
+  list:
+    font_size: "16px"
+    margin: "10px 0"
+    padding: "0 16px 0 32px"
+    line_height: "1.75"
+    color: "#0f172a"
+  separator:
+    border_top: "1px solid #ddd"
+    margin: "20px auto"
+  image:
+    border_radius: "8px"
+    box_shadow: "0 2px 8px rgba(0, 0, 0, 0.08)"
+  link:
+    color: "#2563eb"
+    text_decoration: "underline"
+  strong:
+    font_weight: "bold"
+    color: "#1d4ed8"
+  table:
+    font_size: "12px"
+    border_collapse: "collapse"
+    width: "100%"
+    margin: "10px 0"
+  table_th:
+    padding: "9px 12px"
+    line_height: "22px"
+    font_weight: "bold"
+    background: "#dbeafe"
+    color: "#0f172a"
+    border: "1px solid #bfdbfe"
+  table_td:
+    padding: "9px 12px"
+    line_height: "22px"
+    color: "#1e293b"
+    border: "1px solid #bfdbfe"
+  module_title:
+    font_size: "20.8px"
+    font_weight: "bold"
+    color: "#1d4ed8"
+    margin: "0 0 6px 0"
+    padding: "0 16px"
+    text_align: "center"

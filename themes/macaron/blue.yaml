@@ -1,0 +1,137 @@
+# ============================================================
+# 马卡龙蓝主题 (Macaron Blue)
+# ============================================================
+# 特点：清新明亮的马卡龙蓝色系，柔和低饱和度配色
+# 适用：科技、商务、教育、知识分享类文章
+# 风格：专业、清新、可信赖、理性
+# ============================================================
+
+name: 马卡龙蓝
+description: 清新明亮的马卡龙蓝色系，柔和低饱和度，适合科技、商务、教育类文章
+keywords:
+  - 科技
+  - 商务
+  - 教育
+  - 知识
+  - 专业
+  - 清新
+  - 蓝色
+  - 理性
+  - 可信赖
+  - 职场
+  - 技能
+  - 学习
+  - 教程
+  - 指南
+  - 资讯
+
+colors:
+  primary: "#3b82f6"      # 主色调：马卡龙蓝
+  accent: "#dbeafe"       # 强调色：浅蓝背景
+  text: "#0f172a"         # 主文字：深 slate
+  text_light: "#64748b"   # 次要文字：灰蓝色
+  background: "#ffffff"   # 背景色：纯白
+  blockquote_bg: "#eff6ff" # 引用块背景：极浅蓝
+  code_bg: "#eff6ff"      # 代码背景：极浅蓝
+  table_border: "#bfdbfe" # 表格边框：浅蓝
+  table_header_bg: "#dbeafe" # 表头背景：浅蓝
+
+styles:
+  body:
+    font_size: "16px"
+    line_height: "1.75"
+    letter_spacing: "0px"
+    padding: "0 16px"
+    margin: "0 0 10px 0"
+    color: "#0f172a"
+    background_color: "#ffffff"
+  h1:
+    font_size: "24px"
+    font_weight: "normal"
+    margin: "0 0 8px 0"
+    padding: "0 16px"
+    text_align: "center"
+    color: "#3b82f6"
+  h2:
+    font_size: "20.8px"
+    font_weight: "bold"
+    margin: "0 0 6px 0"
+    padding: "0 16px"
+    color: "#0f172a"
+  h3:
+    font_size: "20.8px"
+    font_weight: "bold"
+    margin: "0 0 4px 0"
+    padding: "0 16px"
+    color: "#0f172a"
+  h4:
+    font_size: "19.2px"
+    font_weight: "bold"
+    margin: "0 0 4px 0"
+    padding: "0 16px"
+    color: "#64748b"
+  blockquote:
+    font_size: "14.4px"
+    padding: "8px 10px"
+    margin: "16px 0"
+    border_left: "4px solid #3b82f6"
+    background: "#eff6ff"
+    border_radius: "0 5px 5px 0"
+    line_height: "1.75"
+    color: "#0f172a"
+  code_inline:
+    font_size: "12.5px"
+    padding: "4px 6px"
+    border_radius: "3px"
+    background: "#eff6ff"
+    color: "#3b82f6"
+  code_block:
+    font_size: "14px"
+    line_height: "2"
+    margin: "10px 4px"
+    padding: "8px"
+    border_radius: "5px"
+    background: "#eff6ff"
+    color: "#0f172a"
+  list:
+    font_size: "16px"
+    margin: "10px 0"
+    padding: "0 16px 0 32px"
+    line_height: "1.75"
+    color: "#0f172a"
+  separator:
+    border_top: "1px solid #ddd"
+    margin: "20px auto"
+  image:
+    border_radius: "8px"
+    box_shadow: "0 2px 8px rgba(0, 0, 0, 0.08)"
+  link:
+    color: "#3b82f6"
+    text_decoration: "underline"
+  strong:
+    font_weight: "bold"
+    color: "#3b82f6"
+  table:
+    font_size: "12px"
+    border_collapse: "collapse"
+    width: "100%"
+    margin: "10px 0"
+  table_th:
+    padding: "9px 12px"
+    line_height: "22px"
+    font_weight: "bold"
+    background: "#dbeafe"
+    color: "#0f172a"
+    border: "1px solid #bfdbfe"
+  table_td:
+    padding: "9px 12px"
+    line_height: "22px"
+    color: "#0f172a"
+    border: "1px solid #bfdbfe"
+  module_title:
+    font_size: "20.8px"
+    font_weight: "bold"
+    color: "#3b82f6"
+    margin: "0 0 6px 0"
+    padding: "0 16px"
+    text_align: "center"

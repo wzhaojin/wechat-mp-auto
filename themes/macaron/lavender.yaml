@@ -1,0 +1,137 @@
+# ============================================================
+# 马卡龙薰衣草主题 (Macaron Lavender)
+# ============================================================
+# 特点：优雅梦幻的马卡龙薰衣草色系，柔和低饱和度配色
+# 适用：艺术、设计、文学、心灵成长类文章
+# 风格：优雅、梦幻、神秘、文艺
+# ============================================================
+
+name: 马卡龙薰衣草
+description: 优雅梦幻的马卡龙薰衣草色系，柔和低饱和度，适合艺术、设计、文学类文章
+keywords:
+  - 艺术
+  - 设计
+  - 文学
+  - 紫色
+  - 薰衣草
+  - 优雅
+  - 梦幻
+  - 神秘
+  - 文艺
+  - 创意
+  - 灵感
+  - 美学
+  - 心灵
+  - 冥想
+  - 治愈
+
+colors:
+  primary: "#a855f7"      # 主色调：马卡龙薰衣草
+  accent: "#f3e8ff"       # 强调色：浅薰衣草背景
+  text: "#0f172a"         # 主文字：深 slate
+  text_light: "#64748b"   # 次要文字：灰蓝色
+  background: "#ffffff"   # 背景色：纯白
+  blockquote_bg: "#faf5ff" # 引用块背景：极浅薰衣草
+  code_bg: "#faf5ff"      # 代码背景：极浅薰衣草
+  table_border: "#e9d5ff" # 表格边框：浅薰衣草
+  table_header_bg: "#f3e8ff" # 表头背景：浅薰衣草
+
+styles:
+  body:
+    font_size: "16px"
+    line_height: "1.75"
+    letter_spacing: "0px"
+    padding: "0 16px"
+    margin: "0 0 10px 0"
+    color: "#0f172a"
+    background_color: "#ffffff"
+  h1:
+    font_size: "24px"
+    font_weight: "normal"
+    margin: "0 0 8px 0"
+    padding: "0 16px"
+    text_align: "center"
+    color: "#a855f7"
+  h2:
+    font_size: "20.8px"
+    font_weight: "bold"
+    margin: "0 0 6px 0"
+    padding: "0 16px"
+    color: "#0f172a"
+  h3:
+    font_size: "20.8px"
+    font_weight: "bold"
+    margin: "0 0 4px 0"
+    padding: "0 16px"
+    color: "#0f172a"
+  h4:
+    font_size: "19.2px"
+    font_weight: "bold"
+    margin: "0 0 4px 0"
+    padding: "0 16px"
+    color: "#64748b"
+  blockquote:
+    font_size: "14.4px"
+    padding: "8px 10px"
+    margin: "16px 0"
+    border_left: "4px solid #a855f7"
+    background: "#faf5ff"
+    border_radius: "0 5px 5px 0"
+    line_height: "1.75"
+    color: "#0f172a"
+  code_inline:
+    font_size: "12.5px"
+    padding: "4px 6px"
+    border_radius: "3px"
+    background: "#faf5ff"
+    color: "#a855f7"
+  code_block:
+    font_size: "14px"
+    line_height: "2"
+    margin: "10px 4px"
+    padding: "8px"
+    border_radius: "5px"
+    background: "#faf5ff"
+    color: "#0f172a"
+  list:
+    font_size: "16px"
+    margin: "10px 0"
+    padding: "0 16px 0 32px"
+    line_height: "1.75"
+    color: "#0f172a"
+  separator:
+    border_top: "1px solid #ddd"
+    margin: "20px auto"
+  image:
+    border_radius: "8px"
+    box_shadow: "0 2px 8px rgba(0, 0, 0, 0.08)"
+  link:
+    color: "#a855f7"
+    text_decoration: "underline"
+  strong:
+    font_weight: "bold"
+    color: "#a855f7"
+  table:
+    font_size: "12px"
+    border_collapse: "collapse"
+    width: "100%"
+    margin: "10px 0"
+  table_th:
+    padding: "9px 12px"
+    line_height: "22px"
+    font_weight: "bold"
+    background: "#f3e8ff"
+    color: "#0f172a"
+    border: "1px solid #e9d5ff"
+  table_td:
+    padding: "9px 12px"
+    line_height: "22px"
+    color: "#0f172a"
+    border: "1px solid #e9d5ff"
+  module_title:
+    font_size: "20.8px"
+    font_weight: "bold"
+    color: "#a855f7"
+    margin: "0 0 6px 0"
+    padding: "0 16px"
+    text_align: "center"

@@ -1,0 +1,133 @@
+# ============================================================
+# 文颜橙心主题 (Wenyan OrangeHeart)
+# ============================================================
+# 特点：温暖橙色调，活力优雅，适合生活、美食、情感类文章
+# 适用：美食、旅行、生活、情感、正能量、温暖
+# 风格：温暖、活力、优雅、治愈
+# 来源：文颜(Wenyan)内置主题移植
+# ============================================================
+
+name: 文颜橙心
+description: 温暖橙色调主题，活力优雅，适合美食、旅行、生活、情感类文章
+keywords:
+  - 橙色
+  - 温暖
+  - 活力
+  - 美食
+  - 旅行
+  - 生活
+  - 情感
+  - 治愈
+  - 正能量
+  - 优雅
+
+colors:
+  primary: "#f97316"      # 主色调：活力橙
+  accent: "#fed7aa"       # 强调色：浅橙背景
+  text: "#1c1917"         # 主文字：深棕灰
+  text_light: "#78716c"   # 次要文字：暖灰
+  background: "#ffffff"   # 背景色：纯白
+  blockquote_bg: "#fff7ed" # 引用块背景：极浅橙
+  code_bg: "#fff7ed"      # 代码背景：极浅橙
+  table_border: "#fdba74" # 表格边框：浅橙
+  table_header_bg: "#ffedd5" # 表头背景：浅橙
+
+styles:
+  body:
+    font_size: "16px"
+    line_height: "1.75"
+    letter_spacing: "0px"
+    padding: "0 16px"
+    margin: "0 0 10px 0"
+    color: "#1c1917"
+    background_color: "#ffffff"
+  h1:
+    font_size: "24px"
+    font_weight: "normal"
+    margin: "0 0 8px 0"
+    padding: "0 16px"
+    text_align: "center"
+    color: "#ea580c"
+  h2:
+    font_size: "20.8px"
+    font_weight: "bold"
+    margin: "0 0 6px 0"
+    padding: "0 16px"
+    color: "#1c1917"
+  h3:
+    font_size: "20.8px"
+    font_weight: "bold"
+    margin: "0 0 4px 0"
+    padding: "0 16px"
+    color: "#1c1917"
+  h4:
+    font_size: "19.2px"
+    font_weight: "bold"
+    margin: "0 0 4px 0"
+    padding: "0 16px"
+    color: "#78716c"
+  blockquote:
+    font_size: "14.4px"
+    padding: "8px 10px"
+    margin: "16px 0"
+    border_left: "4px solid #f97316"
+    background: "#fff7ed"
+    border_radius: "0 5px 5px 0"
+    line_height: "1.75"
+    color: "#44403c"
+  code_inline:
+    font_size: "12.5px"
+    padding: "4px 6px"
+    border_radius: "3px"
+    background: "#ffedd5"
+    color: "#c2410c"
+  code_block:
+    font_size: "14px"
+    line_height: "2"
+    margin: "10px 4px"
+    padding: "8px"
+    border_radius: "5px"
+    background: "#fff7ed"
+    color: "#1c1917"
+  list:
+    font_size: "16px"
+    margin: "10px 0"
+    padding: "0 16px 0 32px"
+    line_height: "1.75"
+    color: "#1c1917"
+  separator:
+    border_top: "1px solid #ddd"
+    margin: "20px auto"
+  image:
+    border_radius: "8px"
+    box_shadow: "0 2px 8px rgba(0, 0, 0, 0.08)"
+  link:
+    color: "#ea580c"
+    text_decoration: "underline"
+  strong:
+    font_weight: "bold"
+    color: "#ea580c"
+  table:
+    font_size: "12px"
+    border_collapse: "collapse"
+    width: "100%"
+    margin: "10px 0"
+  table_th:
+    padding: "9px 12px"
+    line_height: "22px"
+    font_weight: "bold"
+    background: "#ffedd5"
+    color: "#1c1917"
+    border: "1px solid #fdba74"
+  table_td:
+    padding: "9px 12px"
+    line_height: "22px"
+    color: "#44403c"
+    border: "1px solid #fdba74"
+  module_title:
+    font_size: "20.8px"
+    font_weight: "bold"
+    color: "#ea580c"
+    margin: "0 0 6px 0"
+    padding: "0 16px"
+    text_align: "center"

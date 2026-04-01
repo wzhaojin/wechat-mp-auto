@@ -1,0 +1,137 @@
+# ============================================================
+# 马卡龙奶油主题 (Macaron Cream)
+# ============================================================
+# 特点：温暖柔和的马卡龙奶油色系，柔和低饱和度配色
+# 适用：美食、烘焙、生活方式、复古类文章
+# 风格：温暖、柔和、复古、治愈
+# ============================================================
+
+name: 马卡龙奶油
+description: 温暖柔和的马卡龙奶油色系，柔和低饱和度，适合美食、烘焙、复古类文章
+keywords:
+  - 美食
+  - 烘焙
+  - 生活
+  - 复古
+  - 温暖
+  - 柔和
+  - 黄色
+  - 奶油
+  - 治愈
+  - 甜品
+  - 咖啡
+  - 下午茶
+  - 怀旧
+  - 文艺
+  - 慢生活
+
+colors:
+  primary: "#d97706"      # 主色调：马卡龙奶油
+  accent: "#fef3c7"       # 强调色：浅奶油背景
+  text: "#0f172a"         # 主文字：深 slate
+  text_light: "#64748b"   # 次要文字：灰蓝色
+  background: "#ffffff"   # 背景色：纯白
+  blockquote_bg: "#fffbeb" # 引用块背景：极浅奶油
+  code_bg: "#fffbeb"      # 代码背景：极浅奶油
+  table_border: "#fde68a" # 表格边框：浅奶油
+  table_header_bg: "#fef3c7" # 表头背景：浅奶油
+
+styles:
+  body:
+    font_size: "16px"
+    line_height: "1.75"
+    letter_spacing: "0px"
+    padding: "0 16px"
+    margin: "0 0 10px 0"
+    color: "#0f172a"
+    background_color: "#ffffff"
+  h1:
+    font_size: "24px"
+    font_weight: "normal"
+    margin: "0 0 8px 0"
+    padding: "0 16px"
+    text_align: "center"
+    color: "#d97706"
+  h2:
+    font_size: "20.8px"
+    font_weight: "bold"
+    margin: "0 0 6px 0"
+    padding: "0 16px"
+    color: "#0f172a"
+  h3:
+    font_size: "20.8px"
+    font_weight: "bold"
+    margin: "0 0 4px 0"
+    padding: "0 16px"
+    color: "#0f172a"
+  h4:
+    font_size: "19.2px"
+    font_weight: "bold"
+    margin: "0 0 4px 0"
+    padding: "0 16px"
+    color: "#64748b"
+  blockquote:
+    font_size: "14.4px"
+    padding: "8px 10px"
+    margin: "16px 0"
+    border_left: "4px solid #d97706"
+    background: "#fffbeb"
+    border_radius: "0 5px 5px 0"
+    line_height: "1.75"
+    color: "#0f172a"
+  code_inline:
+    font_size: "12.5px"
+    padding: "4px 6px"
+    border_radius: "3px"
+    background: "#fffbeb"
+    color: "#d97706"
+  code_block:
+    font_size: "14px"
+    line_height: "2"
+    margin: "10px 4px"
+    padding: "8px"
+    border_radius: "5px"
+    background: "#fffbeb"
+    color: "#0f172a"
+  list:
+    font_size: "16px"
+    margin: "10px 0"
+    padding: "0 16px 0 32px"
+    line_height: "1.75"
+    color: "#0f172a"
+  separator:
+    border_top: "1px solid #ddd"
+    margin: "20px auto"
+  image:
+    border_radius: "8px"
+    box_shadow: "0 2px 8px rgba(0, 0, 0, 0.08)"
+  link:
+    color: "#d97706"
+    text_decoration: "underline"
+  strong:
+    font_weight: "bold"
+    color: "#d97706"
+  table:
+    font_size: "12px"
+    border_collapse: "collapse"
+    width: "100%"
+    margin: "10px 0"
+  table_th:
+    padding: "9px 12px"
+    line_height: "22px"
+    font_weight: "bold"
+    background: "#fef3c7"
+    color: "#0f172a"
+    border: "1px solid #fde68a"
+  table_td:
+    padding: "9px 12px"
+    line_height: "22px"
+    color: "#0f172a"
+    border: "1px solid #fde68a"
+  module_title:
+    font_size: "20.8px"
+    font_weight: "bold"
+    color: "#d97706"
+    margin: "0 0 6px 0"
+    padding: "0 16px"
+    text_align: "center"

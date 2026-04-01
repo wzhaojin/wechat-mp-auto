@@ -1,0 +1,137 @@
+# ============================================================
+# 马卡龙珊瑚主题 (Macaron Coral)
+# ============================================================
+# 特点：温暖柔和的马卡龙珊瑚色系，柔和低饱和度配色
+# 适用：情感、生活、旅行、摄影类文章
+# 风格：温暖、柔和、治愈、浪漫
+# ============================================================
+
+name: 马卡龙珊瑚
+description: 温暖柔和的马卡龙珊瑚色系，柔和低饱和度，适合情感、生活、旅行类文章
+keywords:
+  - 情感
+  - 生活
+  - 旅行
+  - 摄影
+  - 温暖
+  - 柔和
+  - 珊瑚
+  - 红色
+  - 治愈
+  - 浪漫
+  - 风景
+  - 游记
+  - 回忆
+  - 故事
+  - 感悟
+
+colors:
+  primary: "#f87171"      # 主色调：马卡龙珊瑚
+  accent: "#fee2e2"       # 强调色：浅珊瑚背景
+  text: "#0f172a"         # 主文字：深 slate
+  text_light: "#64748b"   # 次要文字：灰蓝色
+  background: "#ffffff"   # 背景色：纯白
+  blockquote_bg: "#fef2f2" # 引用块背景：极浅珊瑚
+  code_bg: "#fef2f2"      # 代码背景：极浅珊瑚
+  table_border: "#fecaca" # 表格边框：浅珊瑚
+  table_header_bg: "#fee2e2" # 表头背景：浅珊瑚
+
+styles:
+  body:
+    font_size: "16px"
+    line_height: "1.75"
+    letter_spacing: "0px"
+    padding: "0 16px"
+    margin: "0 0 10px 0"
+    color: "#0f172a"
+    background_color: "#ffffff"
+  h1:
+    font_size: "24px"
+    font_weight: "normal"
+    margin: "0 0 8px 0"
+    padding: "0 16px"
+    text_align: "center"
+    color: "#f87171"
+  h2:
+    font_size: "20.8px"
+    font_weight: "bold"
+    margin: "0 0 6px 0"
+    padding: "0 16px"
+    color: "#0f172a"
+  h3:
+    font_size: "20.8px"
+    font_weight: "bold"
+    margin: "0 0 4px 0"
+    padding: "0 16px"
+    color: "#0f172a"
+  h4:
+    font_size: "19.2px"
+    font_weight: "bold"
+    margin: "0 0 4px 0"
+    padding: "0 16px"
+    color: "#64748b"
+  blockquote:
+    font_size: "14.4px"
+    padding: "8px 10px"
+    margin: "16px 0"
+    border_left: "4px solid #f87171"
+    background: "#fef2f2"
+    border_radius: "0 5px 5px 0"
+    line_height: "1.75"
+    color: "#0f172a"
+  code_inline:
+    font_size: "12.5px"
+    padding: "4px 6px"
+    border_radius: "3px"
+    background: "#fef2f2"
+    color: "#f87171"
+  code_block:
+    font_size: "14px"
+    line_height: "2"
+    margin: "10px 4px"
+    padding: "8px"
+    border_radius: "5px"
+    background: "#fef2f2"
+    color: "#0f172a"
+  list:
+    font_size: "16px"
+    margin: "10px 0"
+    padding: "0 16px 0 32px"
+    line_height: "1.75"
+    color: "#0f172a"
+  separator:
+    border_top: "1px solid #ddd"
+    margin: "20px auto"
+  image:
+    border_radius: "8px"
+    box_shadow: "0 2px 8px rgba(0, 0, 0, 0.08)"
+  link:
+    color: "#f87171"
+    text_decoration: "underline"
+  strong:
+    font_weight: "bold"
+    color: "#f87171"
+  table:
+    font_size: "12px"
+    border_collapse: "collapse"
+    width: "100%"
+    margin: "10px 0"
+  table_th:
+    padding: "9px 12px"
+    line_height: "22px"
+    font_weight: "bold"
+    background: "#fee2e2"
+    color: "#0f172a"
+    border: "1px solid #fecaca"
+  table_td:
+    padding: "9px 12px"
+    line_height: "22px"
+    color: "#0f172a"
+    border: "1px solid #fecaca"
+  module_title:
+    font_size: "20.8px"
+    font_weight: "bold"
+    color: "#f87171"
+    margin: "0 0 6px 0"
+    padding: "0 16px"
+    text_align: "center"

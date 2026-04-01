@@ -1,0 +1,133 @@
+# ============================================================
+# 文颜派主题 (Wenyan Pie)
+# ============================================================
+# 特点：现代锐利时尚风格，受少数派sspai和Misty启发
+# 适用：科技评论、观点文章、深度分析、专业内容
+# 风格：锐利、现代、时尚、专业
+# 来源：文颜(Wenyan)内置主题移植，灵感来自sspai和Misty
+# ============================================================
+
+name: 文颜派
+description: 现代锐利时尚风格，灵感来自少数派sspai，适合科技评论、深度分析
+keywords:
+  - 派
+  - 现代
+  - 锐利
+  - 时尚
+  - 科技
+  - 评论
+  - 观点
+  - 深度
+  - 分析
+  - 专业
+
+colors:
+  primary: "#dc2626"      # 主色调：锐利红
+  accent: "#fef2f2"       # 强调色：浅红背景
+  text: "#18181b"         # 主文字：纯黑灰
+  text_light: "#71717a"   # 次要文字：中灰
+  background: "#ffffff"   # 背景色：纯白
+  blockquote_bg: "#fafafa" # 引用块背景：极浅灰
+  code_bg: "#f4f4f5"      # 代码背景：浅灰
+  table_border: "#d4d4d8" # 表格边框：中灰
+  table_header_bg: "#f4f4f5" # 表头背景：浅灰
+
+styles:
+  body:
+    font_size: "16px"
+    line_height: "1.75"
+    letter_spacing: "0px"
+    padding: "0 16px"
+    margin: "0 0 10px 0"
+    color: "#18181b"
+    background_color: "#ffffff"
+  h1:
+    font_size: "24px"
+    font_weight: "normal"
+    margin: "0 0 8px 0"
+    padding: "0 16px"
+    text_align: "center"
+    color: "#18181b"
+  h2:
+    font_size: "20.8px"
+    font_weight: "bold"
+    margin: "0 0 6px 0"
+    padding: "0 16px"
+    color: "#18181b"
+  h3:
+    font_size: "20.8px"
+    font_weight: "bold"
+    margin: "0 0 4px 0"
+    padding: "0 16px"
+    color: "#18181b"
+  h4:
+    font_size: "19.2px"
+    font_weight: "bold"
+    margin: "0 0 4px 0"
+    padding: "0 16px"
+    color: "#71717a"
+  blockquote:
+    font_size: "14.4px"
+    padding: "8px 10px"
+    margin: "16px 0"
+    border_left: "4px solid #dc2626"
+    background: "#fafafa"
+    border_radius: "0 5px 5px 0"
+    line_height: "1.75"
+    color: "#3f3f46"
+  code_inline:
+    font_size: "12.5px"
+    padding: "4px 6px"
+    border_radius: "3px"
+    background: "#f4f4f5"
+    color: "#dc2626"
+  code_block:
+    font_size: "14px"
+    line_height: "2"
+    margin: "10px 4px"
+    padding: "8px"
+    border_radius: "5px"
+    background: "#fafafa"
+    color: "#18181b"
+  list:
+    font_size: "16px"
+    margin: "10px 0"
+    padding: "0 16px 0 32px"
+    line_height: "1.75"
+    color: "#18181b"
+  separator:
+    border_top: "1px solid #ddd"
+    margin: "20px auto"
+  image:
+    border_radius: "8px"
+    box_shadow: "0 2px 8px rgba(0, 0, 0, 0.08)"
+  link:
+    color: "#dc2626"
+    text_decoration: "underline"
+  strong:
+    font_weight: "bold"
+    color: "#18181b"
+  table:
+    font_size: "12px"
+    border_collapse: "collapse"
+    width: "100%"
+    margin: "10px 0"
+  table_th:
+    padding: "9px 12px"
+    line_height: "22px"
+    font_weight: "bold"
+    background: "#f4f4f5"
+    color: "#18181b"
+    border: "1px solid #d4d4d8"
+  table_td:
+    padding: "9px 12px"
+    line_height: "22px"
+    color: "#3f3f46"
+    border: "1px solid #d4d4d8"
+  module_title:
+    font_size: "20.8px"
+    font_weight: "bold"
+    color: "#dc2626"
+    margin: "0 0 6px 0"
+    padding: "0 16px"
+    text_align: "center"
