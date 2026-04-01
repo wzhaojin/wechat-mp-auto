@@ -9,6 +9,7 @@ import uuid
 import logging
 from typing import Dict, Optional, List
 from pathlib import Path
+from .advanced_components import AdvancedComponents
 
 logger = logging.getLogger(__name__)
 
@@ -759,6 +760,10 @@ class ArticleWriterSkill:
             link_style = f'a {{color:{link_c};text-decoration:{link_dec};}}'
             html = [f'<div style="{wrapper_style}"><style>{link_style}</style>']
 
+            # 解析高级组件 ::: syntax
+            adv = AdvancedComponents()
+            markdown = adv.parse(markdown, primary)
+
             lines = markdown.split('\n')
             i = 0
             pending_ul_lines = []
@@ -822,7 +827,12 @@ class ArticleWriterSkill:
                 if raw_line.startswith('    ') or raw_line.startswith('\t'):
                     flush_ul()
                     flush_ol()
-                    # 缩进代码块 - 苹果风格
+                    # 收集所有缩进行
+                    code_lines = [line]
+                    i += 1
+                    while i < len(lines) and (lines[i].startswith('    ') or lines[i].startswith('\t') or lines[i].strip() == ''):
+                        code_lines.append(lines[i])
+                        i += 1
                     code_content = '\n'.join(code_lines)
                     code_content = code_content.replace("<", "&lt;").replace(">", "&gt;")
                     apple_style = f"margin:16px 0;max-width:100%;box-sizing:border-box;background:#1e1e1e;border-radius:12px;overflow:hidden;font-family:'SF Mono','Fira Code',Menlo,Monaco,monospace;"
